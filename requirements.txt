@@ -4,4 +4,3 @@ matplotlib
 ipywidgets
 scipy
 opencv-contrib-python
-math
