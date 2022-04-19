@@ -3,4 +3,4 @@ pandas
 matplotlib
 ipywidgets
 scipy
-opencv-contrib-python
+opencv-python
