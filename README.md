@@ -1,2 +1,2 @@
 # JupyterNTB
-This project provides an interactive Jupyter notebook that calculate hemodynamics paramaters such as cardiac output, ejection fraction, ejection volume and fractional shortening from videos containg insect's heart contractile activity
+Este projeto tem como objetivo fazer o cálculo de parâmetros hemodinâmicos como débito cardíaco, fração de ejeção, volume de ejeção e fração de encurtamento
