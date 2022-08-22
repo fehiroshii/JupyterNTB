@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
 
+import get
+import cfg
+
 # Function that apply filters on a image
 def filters(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)  # image to grayscale
@@ -9,8 +12,35 @@ def filters(img):
         
     return gauss  
 
-# Adjust the treshold of a image
+def rectangle_ellipse(parameters):
+    import global_  # Get current value for global var
+
+    # List contaning the 4 vertex of rectangle that fits the parameter
+    box2 = cv.boxPoints(parameters)
+    box2 = np.intp(box2)     
+    
+    # Inferior ellipse vertex  
+    global_.ellipse_vertex[0][0] = (box2[0][0] + box2[3][0])//2
+    global_.ellipse_vertex[0][1] = (box2[0][1] + box2[3][1])//2
+
+    # Superior ellipse vertex
+    global_.ellipse_vertex[1][0] = (box2[1][0] + box2[2][0])//2
+    global_.ellipse_vertex[1][1] = (box2[1][1] + box2[2][1])//2
+
+    # Right ellipse vertex
+    global_.ellipse_vertex[2][0] = (box2[2][0] + box2[3][0])//2
+    global_.ellipse_vertex[2][1] = (box2[2][1] + box2[3][1])//2
+            
+    # Left ellipse vertex
+    global_.ellipse_vertex[3][0] = (box2[0][0] + box2[1][0])//2
+    global_.ellipse_vertex[3][1] = (box2[0][1] + box2[1][1])//2        
+
+    global_.ellipse_vertex = global_.ellipse_vertex.astype(int)
+    
+    return box2
+
 def treshold_adjustment (args):
+    import global_
 
     try:
         # Get current treshold and scale from trackbar
@@ -21,8 +51,8 @@ def treshold_adjustment (args):
         treshold = 254
 
     # Make copy of unaltered frame
-    dias_frame = np.copy(max_frame)
-    sys_frame = np.copy(min_frame)
+    dias_frame = np.copy(global_.max_frame)
+    sys_frame = np.copy(global_.min_frame)
 
     # Apply filters on both frames
     dias_filter  = filters(dias_frame)
@@ -69,8 +99,12 @@ def treshold_adjustment (args):
     min_ellipse = (min_center,(min_dim[0],avg_height),0) 
 
     # Draw ellipses on both frames
-    cv.ellipse(dias_frame, max_ellipse, (255,0,255), 1)
-    cv.ellipse(sys_frame, min_ellipse, (255,0,255), 1)
+    #cv.ellipse(dias_frame, max_ellipse, (255,0,255), 1)
+    #cv.ellipse(sys_frame, min_ellipse, (255,0,255), 1)
+
+    # Draw ellipses on both frames
+    cv.ellipse(dias_frame, (max_center,max_dim,max_angle), (255,0,255), 1)
+    cv.ellipse(sys_frame, (min_center,min_dim,min_angle), (255,0,255), 1)
 
     global ellipse_vertex
     ellipse_vertex = np.zeros((4,2))
@@ -91,67 +125,154 @@ def treshold_adjustment (args):
     
     return
 
-def get_filters_parameters (file):
 
-    treshold = 255
-    video = cv.VideoCapture(file)   # Opens video       
-    global max_frame, min_frame, first_frame, frame_height, frame_width
+def scale_contour(cnt, scale):
+    M = cv.moments(cnt)
+    cx = int(M['m10']/M['m00'])
+    cy = int(M['m01']/M['m00'])
 
-    ret, first_frame = video.read()
-    gray = cv.cvtColor(first_frame, cv.COLOR_BGR2GRAY)
-    _, bw_img = cv.threshold(gray,160,255,cv.THRESH_BINARY)
-    wht_px = np.count_nonzero(bw_img)
-
-    frame_height = first_frame.shape[0]
-    frame_width = first_frame.shape[1]
-
-    count = 0
-    min_frame = first_frame
-    max_frame = first_frame
-
-    max_wht_px = wht_px
-    min_wht_px = wht_px
-
-    while (count <= video.get(cv.CAP_PROP_FRAME_COUNT)//3):
-
-      ret, img = video.read()
-      gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-      _, bw_img = cv.threshold(gray,160,255,cv.THRESH_BINARY)
-
-      wht_px = np.count_nonzero(bw_img)
-
-      if wht_px > max_wht_px:
-        max_frame = img
-        max_wht_px = wht_px
-        max_time = video.get(cv.CAP_PROP_POS_MSEC)/1000
-      elif wht_px < min_wht_px:
-        min_frame = img
-        min_wht_px = wht_px
-        min_time = video.get(cv.CAP_PROP_POS_MSEC)/1000
-
-      count = count + 1
-
-    # Show images on systole and diastole for trehsold adjustment
-    cv.imshow('Systole',min_frame)
-    cv.imshow('Diastole',max_frame)
-
-    # Create window with 3 trackbar
-    cv.namedWindow('Comandos', cv.WINDOW_NORMAL)
-    cv.resizeWindow('Comandos', 700, 100)
-    cv.createTrackbar('Treshold','Comandos',254,254,treshold_adjustment)
-    cv.createTrackbar('Axis','Comandos',0,frame_width,axis_adjustment)
-    cv.createTrackbar('Scale','Comandos',100,100,treshold_adjustment)
-
-    # Waits for the user to press 'n' key
-    key = cv.waitKey(0)
-    while (key != ord('n')):
-        key = cv.waitKey(0)
+    cnt_norm = cnt - [cx,0]
+    #cnt_scaled = cnt_norm * scale
     
-    # Get values and close windows
-    treshold = cv.getTrackbarPos('Treshold','Comandos')
-    axis_location = cv.getTrackbarPos('Axis','Comandos')
-    scale = cv.getTrackbarPos('Scale','Comandos')/100
+    cnt_scaled = np.copy(cnt_norm)
 
-    cv.destroyAllWindows()   
+    for i in range(len(cnt_norm)):
+        cnt_scaled[i][0][0] = cnt_norm[i][0][0]*scale
+    
+    cnt_scaled = cnt_scaled + [cx,0]
+    cnt_scaled = cnt_scaled.astype(np.int32)
 
-    return treshold, axis_location, scale
+    return cnt_scaled
+
+def ver_axis_adjustment(args):
+    import global_
+    dias_frame = np.copy(global_.max_frame)
+    sys_frame = np.copy(global_.min_frame)
+
+    cv.line(dias_frame,(args,0),(args,global_.frame_height),(255,0,255),1)
+    cv.line(sys_frame,(args,0),(args,global_.frame_height),(255,0,255),1)
+
+    cv.imshow('Systole',sys_frame)
+    cv.imshow('Diastole',dias_frame)
+
+    return
+
+def hor_axis_adjustment(args):
+    import global_
+    dias_frame = np.copy(global_.max_frame)
+    sys_frame = np.copy(global_.min_frame)
+
+    cv.line(dias_frame,(0,args),(global_.frame_width,args),(255,0,255),1)
+    cv.line(sys_frame,(0,args),(global_.frame_width,args),(255,0,255),1)
+
+    cv.imshow('Systole',sys_frame)
+    cv.imshow('Diastole',dias_frame)
+
+    return
+
+
+####################################################
+#            Ellipse related functions             #
+####################################################
+
+def fit_ellipse(source_img,method,join,stop,scale):
+    import global_
+
+    # Fit the contour that fits the heart shape
+    cnts,_ = cv.findContours(source_img, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+
+    # Matrizes que guardam a area, pontos do retangulo e elipse de cada contorno
+    #minEllipse = [None]*len(cnts)
+    center_contours = []
+    
+    best_i = 0
+    
+    max_area = -1
+    
+    # Loop that gets the height, width and height of each contour 
+    # Salva os parametros do contorno de maior area (parte central do coração)
+    for i, c in enumerate(cnts):
+
+        # Finds the coordinates of the rectangle that circumscribes the contour "c"
+        top_left_x,top_left_y,largura,altura = cv.boundingRect(c)
+
+        # Get rectangle center
+        centerx = (2*top_left_x + largura)/2
+        centery = (2*top_left_y + altura)/2
+        center_contours.append([centerx,centery])
+
+        # Encontra o contorno de maior area 
+        if cv.contourArea(c) > max_area: 
+            max_area = cv.contourArea(c)
+            estimated_centerx = centerx
+            estimated_centery = centery
+            best_i = i
+    
+    # Se distância maior que 10, então a divisão aparente será removida
+    if distance(estimated_centerx,estimated_centery,global_.avg_x_center,global_.avg_y_center) > 20 or join :
+        #contours = remove_division(contours, best_i)
+        if method == True:
+            method = False
+        else:
+            stop = True
+    
+    max_area = -1
+
+    for i, c in enumerate(cnts):
+
+        if cv.contourArea(c) > max_area: 
+            max_area = cv.contourArea(c)
+            main_cnt = i
+
+    
+    heart_cnt = cnts[main_cnt]
+    scaled_heart_cnt = scale_contour(heart_cnt,scale)
+
+    minEllipse = cv.fitEllipseDirect(scaled_heart_cnt)
+
+    top_left_x,top_left_y,width,height = cv.boundingRect(scaled_heart_cnt)
+
+    centerx = (2*top_left_x + largura)/2
+    centery = (2*top_left_y + altura)/2
+
+    center_contours.append([float(centerx),float(centery)])
+
+    area = cv.contourArea(scaled_heart_cnt)         
+
+    drawing_img = np.zeros((source_img.shape[0], source_img.shape[1], 3), dtype=np.uint8)
+    
+    for i, c in enumerate(cnts):
+            
+        if cv.contourArea(c) == max_area: 
+           
+            # Obtem parametros da elipse ((centrox,centroy), (altura,largura), ângulo)
+            ellipse_param =  minEllipse
+
+            import global_  # Update global variables
+            global_.ellipse_vertex = np.zeros((4,2))
+            global_.ellipse_angle = ellipse_param[2]
+        
+            box2 = rectangle_ellipse(minEllipse)
+            get.ellipse_size()
+
+            # Draw contours and ellipse
+            cv.drawContours(drawing_img, scaled_heart_cnt, -1,cfg.main_cnt_color)
+            cv.ellipse(drawing_img, minEllipse, cfg.ellipse_color, 1) 
+
+            # Draw ellipse vertex        
+            cv.circle(drawing_img,(global_.ellipse_vertex[0][0],global_.ellipse_vertex[0][1]),0,cfg.ell_vrtx_color,8)
+            cv.circle(drawing_img,(global_.ellipse_vertex[1][0],global_.ellipse_vertex[1][1]),0,cfg.ell_vrtx_color,8)
+            cv.circle(drawing_img,(global_.ellipse_vertex[2][0],global_.ellipse_vertex[2][1]),0,cfg.ell_vrtx_color,8)
+            cv.circle(drawing_img,(global_.ellipse_vertex[3][0],global_.ellipse_vertex[3][1]),0,cfg.ell_vrtx_color,8)     
+        else:
+            # Draw other contours
+            cv.drawContours(drawing_img, cnts, i, cfg.sec_cnt_color)
+
+    cv.rectangle(drawing_img,(top_left_x,top_left_y),
+                (top_left_x+width,top_left_y+height),cfg.rec_color,2)
+
+    return scaled_heart_cnt, main_cnt, ellipse_param, box2 ,drawing_img,area,method,stop
+
+
+def distance(x1,y1,x2,y2):
+    return np.sqrt((x1-x2)**2 + (y1-y2)**2)

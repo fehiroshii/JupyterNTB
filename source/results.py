@@ -10,7 +10,7 @@ from scipy.signal import argrelextrema
 def max_min_pts(lst):
 
     i = 0
-    test = argrelextrema(lst, np.less_equal, order=6)
+    test = argrelextrema(lst, np.less_equal, order=10)
 
     min_list = test[0].tolist()
     max_list = []
@@ -131,11 +131,13 @@ def show_resultstable(units,conversion,weight,avg_lst):
     avg_min_dia = avg_lst[4]
 
     # Calculate hemodynamics parameteres    
-    avg_cardiac_out = str(format(avg_freq*60.0*(avg_max_volume - avg_min_volume)*1000000*conversion[2]/weight,"3.2f")).replace(".",",")
+    avg_cardiac_out = str(format(avg_freq*60.0*(avg_max_volume - avg_min_volume)*conversion[3]/(weight*1e-6),"3.2f")).replace(".",",")
     beats_per_min = str(format(avg_freq*60,"3.2f")).replace(".",",")
     avg_ejection_volume = str(format((avg_max_volume - avg_min_volume)*conversion[2],"3.2f")).replace(".",",")
     avg_ejection_fraction = str(format((avg_max_volume - avg_min_volume)*100/avg_max_volume,"3.2f")).replace(".",",")
     avg_fractional_short = str(format((avg_max_dia-avg_min_dia)*100/avg_max_dia,"3.2f")).replace(".",",")
+
+    print(avg_ejection_volume, avg_cardiac_out, avg_ejection_fraction )
 
     # 
     df1 = pd.DataFrame([beats_per_min + ' bpm',
@@ -400,7 +402,7 @@ def show_results(weight,time,minor_axis,major_axis,manual_minor,manual_major,
             multiplier[2] = 1e-6
         
         # Convert units of volume
-        if menu_volume.value == 'ml/min/kg':
+        if menu_cout.value == 'ml/min/kg':
             multiplier[3] = 1e-12
 
         # Define which volume to use
