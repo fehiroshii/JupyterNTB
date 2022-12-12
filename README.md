@@ -21,9 +21,17 @@ No atual momento, para a execução do software é necessário fazer o dowload d
 
 | Biblioteca          |  Versão  |
 | :-----------------: | :-----------------: |
-|Matplotlib   | 3.5.1 |
-| Numpy  |  1.20.1 |
-|OpenCV  |  4.5.5.64 |
-|  Scipy |  1.8.1 |
-|  Pandas  | 1.2.3 |
+|[Matplotlib](https://matplotlib.org/)   | 3.5.1 |
+| [Numpy](https://numpy.org/)  |  1.20.1 |
+|[OpenCV](https://opencv.org/)  |  4.6.0.66 |
+|  [Scipy](https://scipy.org/) |  1.8.1 |
+|  [Pandas](https://pandas.pydata.org/)  | 1.2.3 |
 
+
+## Referências
+
+1.	Virtanen P, Gommers R, Oliphant TE, Haberland M, Reddy T, Cournapeau D, et al. SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python. Nat Methods. 2020;17:261–72. 
+2.	Harris CR, Millman KJ, der Walt SJ van, Gommers R, Virtanen P, David Cournapeau, et al. Array programming with NumPy. Nature [Internet]. 2020 set;585(7825):357–62. Available from: https://doi.org/10.1038/s41586-020-2649-2
+3.	pandas development team T. pandas-dev/pandas: Pandas [Internet]. Zenodo; 2020. Available from: https://doi.org/10.5281/zenodo.3509134
+4.	Bradski G. The OpenCV Library. Dr Dobb’s Journal of Software Tools. 2000; 
+5.	Hunter JD. Matplotlib: A 2D graphics environment. Comput Sci Eng. 2007;9(3):90–5. 
