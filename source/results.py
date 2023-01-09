@@ -50,7 +50,11 @@ def plot_img2(x_axes, y_axes, x_title, y_title, plot_title, h,w, p_enable,minimu
     ax.plot(x_axes, y_axes)  # Plot some data on the axes.
 
     # Set title to Axes
-    ax.set(xlabel= x_title, ylabel= y_title + "(" + units + ")",title= plot_title)
+    fig.suptitle(t = plot_title, fontsize=25)
+    plt.xlabel(x_title, fontsize=17)
+    plt.ylabel(y_title + "(" + units + ")", fontsize=17)
+    
+    #ax.set(xlabel= x_title, ylabel= y_title + "(" + units + ")",title= plot_title)
          
     ax.grid() # Put grids on plot
 
@@ -365,7 +369,7 @@ def show_results(weight,time,minor_axis,major_axis,manual_minor,manual_major,
 
     # Show results in separate tabs
     with outt1:
-        plot_results(check.value,['μm^3','μm^2','μm'],[1,1,1e-9],time,plot_y,min_points,max_points,trgg)
+        plot_results(check.value,['μm','μm^2','μm^3'],[1,1,1e-9],time,plot_y,min_points,max_points,trgg)
     with outt2:
         display(show_maintable(['μm','μm^2','nl'],[1,1,1e-6],min_list,max_list,frq))
     with outt3:
