@@ -29,6 +29,9 @@ No atual momento, para a execução do software é necessário fazer o dowload d
 
  ## Execução Online
  [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/source/main_ntb.ipynb)
+ 
+ [![Binder](https://mybinder.org/badge_logo.svg)]
+ (https://mybinder.org/v2/gh/fehiroshii/JupyterNTB/main?labpath=%2Fsource%2Fmain_ntb.ipynb)
   
 
 ## Referências
