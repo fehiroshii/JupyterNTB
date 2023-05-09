@@ -27,6 +27,9 @@ No atual momento, para a execução do software é necessário fazer o dowload d
 |  [Scipy](https://scipy.org/) |  1.8.1 |
 |  [Pandas](https://pandas.pydata.org/)  | 1.2.3 |
 
+ ## Execução Online
+ [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/master/notebooks/main_ntb.ipynb)
+  
 
 ## Referências
 
