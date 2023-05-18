@@ -1,65 +1,296 @@
 import cv2 as cv
 import numpy as np
 import functions
+import cfg
 
 
-def filters_parameters (file):
-    import global_
+def filters_parameters(file, lenght, roi):
 
     treshold = 255
 
-    # Faz a leitura do primeiro frame do video
-    video = cv.VideoCapture(file)       
+    video = cv.VideoCapture(file)
+    video.set(cv.CAP_PROP_POS_FRAMES, lenght[0])
 
-    ret, global_.first_frame = video.read()
-    gray = cv.cvtColor(global_.first_frame, cv.COLOR_BGR2GRAY)
-    _, bw_img = cv.threshold(gray,160,255,cv.THRESH_BINARY)
-    wht_px = np.count_nonzero(bw_img)
-
-    global_.frame_height = global_.first_frame.shape[0]
-    global_.frame_width = global_.first_frame.shape[1]
-
+    first = True
     count = 0
-    global_.min_frame = global_.first_frame
-    global_.max_frame = global_.first_frame
 
-    max_wht_px = wht_px
-    min_wht_px = wht_px
+    # Finds a frame with maximum luminous intensity (Diastole) and a
+    # frame with minimum luminous intesity (Systole) in the range defined by user
+    while (count <= ((lenght[1]-lenght[0])//3)):
 
-    while (count <= video.get(cv.CAP_PROP_FRAME_COUNT)//3):
+        ret, img = video.read()
+        img_crop = img[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+        gray = cv.cvtColor(img_crop, cv.COLOR_BGR2GRAY)
+        _, bw_img = cv.threshold(gray, 160, 255, cv.THRESH_BINARY)
 
-      ret, img = video.read()
-      gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-      _, bw_img = cv.threshold(gray,160,255,cv.THRESH_BINARY)
+        wht_px = np.count_nonzero(bw_img)
 
-      wht_px = np.count_nonzero(bw_img)
+        # Execute on first interaction
+        if first:
+            frame_height = img.shape[0]
+            frame_width = img.shape[1]
 
-      if wht_px > max_wht_px:
-        global_.max_frame = img
-        max_wht_px = wht_px
-        max_time = video.get(cv.CAP_PROP_POS_MSEC)/1000
-      elif wht_px < min_wht_px:
-        global_.min_frame = img
-        min_wht_px = wht_px
-        min_time = video.get(cv.CAP_PROP_POS_MSEC)/1000
+            max_wht_px = wht_px
+            min_wht_px = wht_px
+            max_frame = img
+            min_frame = img
+            first = False
 
-      count = count + 1
+        if wht_px > max_wht_px:
+            max_frame = img
+            max_wht_px = wht_px
+
+        if wht_px < min_wht_px:
+            min_frame = img
+            min_wht_px = wht_px
+
+        count = count + 1
 
     # Show images on systole and diastole for trehsold adjustment
-    cv.imshow('Systole',global_.min_frame)
-    cv.imshow('Diastole',global_.max_frame)
+    cv.imshow('Systole', min_frame)
+    cv.imshow('Diastole', max_frame)
+    
+    # Nested Functions that are used as callback functions 
+
+    # Adjust a vertical axis on frame that represents the revolution axis
+    def ver_axis_adjustment(args):
+        dias_frame = np.copy(max_frame)
+        sys_frame = np.copy(min_frame)
+
+        cv.line(dias_frame, (args, 0), (args, frame_height), (255, 0, 255), 1)
+        cv.line(sys_frame, (args, 0), (args, frame_height), (255, 0, 255), 1)
+
+        cv.imshow('Systole', sys_frame)
+        cv.imshow('Diastole', dias_frame)
+
+        return
+    
+    def treshold_adjustment(args):
+        # Get current treshold and scale from trackbar
+        scale = cv.getTrackbarPos('Scale', 'Comandos')
+        treshold = cv.getTrackbarPos('Treshold', 'Comandos')
+
+        # Make copy of unaltered frame
+        dias_frame = np.copy(max_frame)
+        sys_frame = np.copy(min_frame)
+
+        # Crop image according to ROI
+        dias_frame_crop = dias_frame[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+        sys_frame_crop = sys_frame[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+
+        # Apply filters on both frames
+        dias_filter = functions.filters(dias_frame_crop)
+        sys_filter = functions.filters(sys_frame_crop)
+        _, dias_binary_img = cv.threshold(dias_filter, treshold,
+                                          255, cv.THRESH_BINARY)
+        _, sys_binary_img = cv.threshold(sys_filter, treshold,
+                                         255, cv.THRESH_BINARY)
+        
+        # Add a black border to both images 
+        sys_binary_img = cv.copyMakeBorder(
+            sys_binary_img,
+            top=1,
+            bottom=1,
+            left=1,
+            right=1,
+            borderType=cv.BORDER_CONSTANT,
+            value=(0, 0, 0)
+        )
+
+        dias_binary_img = cv.copyMakeBorder(
+            dias_binary_img,
+            top=1,
+            bottom=1,
+            left=1,
+            right=1,
+            borderType=cv.BORDER_CONSTANT,
+            value=(0, 0, 0)
+        )
+
+        # Detect binary edges
+        dias_binary_edges = cv.Canny(dias_binary_img, 50, 100, 5, L2gradient=True)
+        sys_binary_edges = cv.Canny(sys_binary_img, 50, 100, 5, L2gradient=True)
+
+        # Find contours on both frames
+        dias_contours, _ = cv.findContours(dias_binary_edges,
+                                           cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+        sys_contours, _ = cv.findContours(sys_binary_edges,
+                                          cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+
+        # Detect greatest contour of both frames and get its index
+        max_area = -1
+        for i, c in enumerate(sys_contours):
+            if cv.arcLength(c, True) > max_area:
+                max_area = cv.arcLength(c, True)
+                max_i_sys = i
+
+        max_area = -1
+        for i, c in enumerate(dias_contours):
+            if cv.arcLength(c, True) > max_area:
+                max_area = cv.arcLength(c, True)
+                max_i_dias = i
+
+        # Apply scale to both contours (Systole and Diastole)
+        scaled_dias = functions.scale_contour(dias_contours[max_i_dias],
+                                              scale/100)
+        scaled_sys = functions.scale_contour(sys_contours[max_i_sys],
+                                             scale/100)    
+
+        # Place the detected contour on the right place on original frame
+        scaled_dias = scaled_dias + roi[0]
+        scaled_sys = scaled_sys + roi[0]   
+        
+        # Draw contours on both frames
+        cv.drawContours(dias_frame, scaled_dias, -1, (255, 0, 255), 1)
+        cv.drawContours(sys_frame, scaled_sys, -1, (255, 0, 255), 1)
+
+        # Obtain ellipse param as  (center x,center y), (height,width), ângle
+        min_center, min_dim, min_angle = cv.fitEllipseDirect(scaled_sys)
+        max_center, max_dim, max_angle = cv.fitEllipseDirect(scaled_dias)
+
+        # Draw ellipses on both frames
+        cv.ellipse(dias_frame, (max_center, max_dim, max_angle),
+                   (255, 0, 255), 1)
+        cv.ellipse(sys_frame, (min_center, min_dim, min_angle),
+                   (255, 0, 255), 1)
+
+        # Show both frames with ellipse adjusted
+        cv.imshow('Systole', sys_frame)
+        cv.imshow('Diastole', dias_frame)
+
+        return
+    
+    def hor_axis_adjustment(args):
+        dias_frame = np.copy(max_frame)
+        sys_frame = np.copy(min_frame)
+
+        # Get current threshold and scale from trackbar
+        scale = cv.getTrackbarPos('Scale', 'Comandos')
+        treshold = cv.getTrackbarPos('Treshold', 'Comandos')
+        x_ax = cv.getTrackbarPos('Axis', 'Comandos')
+
+        # Crop image according to ROI
+        dias_frame_crop = dias_frame[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+        sys_frame_crop = sys_frame[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+
+        # Apply filters on both frames
+        dias_filter = functions.filters(dias_frame_crop)
+        sys_filter = functions.filters(sys_frame_crop)
+        _, dias_binary_img = cv.threshold(dias_filter, treshold,
+                                          255, cv.THRESH_BINARY)
+        _, sys_binary_img = cv.threshold(sys_filter, treshold,
+                                         255, cv.THRESH_BINARY)
+
+        # Add a black border to both images
+        sys_binary_img = cv.copyMakeBorder(
+            sys_binary_img,
+            top=1,
+            bottom=1,
+            left=1,
+            right=1,
+            borderType=cv.BORDER_CONSTANT,
+            value=(0, 0, 0)
+        )
+
+        dias_binary_img = cv.copyMakeBorder(
+            dias_binary_img,
+            top=1,
+            bottom=1,
+            left=1,
+            right=1,
+            borderType=cv.BORDER_CONSTANT,
+            value=(0, 0, 0)
+        )
+
+        # Detect binary edges
+        dias_binary_edges = cv.Canny(
+            dias_binary_img, 50, 100, 5, L2gradient=True)
+        sys_binary_edges = cv.Canny(
+            sys_binary_img, 50, 100, 5, L2gradient=True)
+
+        # Find contours on both frames
+        dias_contours, _ = cv.findContours(dias_binary_edges,
+                                           cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+        sys_contours, _ = cv.findContours(sys_binary_edges,
+                                          cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+
+        # Detect greatest contour of both frames and get its index
+        max_area = -1
+        for i, c in enumerate(sys_contours):
+            if cv.arcLength(c, True) > max_area:
+                max_area = cv.arcLength(c, True)
+                max_i_sys = i
+
+        max_area = -1
+        for i, c in enumerate(dias_contours):
+            if cv.arcLength(c, True) > max_area:
+                max_area = cv.arcLength(c, True)
+                max_i_dias = i
+
+        # Apply scale to both contours (Systole and Diastole)
+        scaled_dias = functions.scale_contour(dias_contours[max_i_dias],
+                                              scale/100)
+        scaled_sys = functions.scale_contour(sys_contours[max_i_sys],
+                                             scale/100)
+        
+        # Place the detected contour on the right place on original frame
+        scaled_dias = scaled_dias + roi[0]
+        scaled_sys = scaled_sys + roi[0]
+
+        # Draw contours on both frames
+        cv.drawContours(dias_frame, scaled_dias, -1, (255, 0, 255), 1)
+        cv.drawContours(sys_frame, scaled_sys, -1, (255, 0, 255), 1)
+
+        dias_left_x = np.array([])
+        dias_right_x = np.array([])
+
+        for i in range(len(scaled_dias)):
+            if abs(scaled_dias[i][0][1] - args) <= 5:
+                if scaled_dias[i][0][0] <= x_ax:
+                    dias_left_x = np.append(dias_left_x, scaled_dias[i][0][0])
+                else:
+                    dias_right_x = np.append(dias_right_x, scaled_dias[i][0][0])
+
+        sys_left_x = np.array([])
+        sys_right_x = np.array([])
+
+        for i in range(len(scaled_sys)):
+            if abs(scaled_sys[i][0][1] - args) <= 5:
+                if scaled_sys[i][0][0] <= x_ax:
+                    sys_left_x = np.append(sys_left_x, scaled_sys[i][0][0])
+                else:
+                    sys_right_x = np.append(sys_right_x, scaled_sys[i][0][0])
+
+        if dias_left_x != [] and dias_right_x != [] and sys_left_x != [] and sys_right_x != []:
+            cv.circle(dias_frame, (int(np.average(dias_left_x)), args),
+                  3, (0, 0, 255), -1)
+            cv.circle(dias_frame, (int(np.average(dias_right_x)), args),
+                  3, (0, 0, 255), -1)
+
+            cv.circle(sys_frame, (int(np.average(sys_left_x)), args),
+                  3, (0, 0, 255), -1)
+            cv.circle(sys_frame, (int(np.average(sys_right_x)), args),
+                  3, (0, 0, 255), -1)
+
+        cv.line(dias_frame, (0, args), (frame_width, args), (255, 0, 255), 1)
+        cv.line(sys_frame, (0, args), (frame_width, args), (255, 0, 255), 1)
+
+        cv.imshow('Systole', sys_frame)
+        cv.imshow('Diastole', dias_frame)
+
+        return
 
     # Create window with 3 trackbar
     cv.namedWindow('Comandos', cv.WINDOW_NORMAL)
     cv.resizeWindow('Comandos', 700, 100)
-    cv.createTrackbar('Treshold','Comandos',254,254,functions.treshold_adjustment)
-    cv.createTrackbar('Axis','Comandos',0,global_.frame_width,functions.ver_axis_adjustment)
-    cv.createTrackbar('Diameter','Comandos',0,global_.frame_height,functions.hor_axis_adjustment)
-    cv.createTrackbar('Scale','Comandos',100,100,functions.treshold_adjustment)
+    cv.createTrackbar('Treshold', 'Comandos', 254, 254, treshold_adjustment)
+    cv.createTrackbar('Axis', 'Comandos', 0, frame_width, ver_axis_adjustment)
+    cv.createTrackbar('Diameter', 'Comandos', 0, frame_height, hor_axis_adjustment)
+    cv.createTrackbar('Scale', 'Comandos', 100, 100, treshold_adjustment)
 
     # Waits for the user to press 'n' key
     key = cv.waitKey(0)
-    while (key != ord('n')):
+    while (key != cfg.confirm):
         key = cv.waitKey(0)
     
     # Get values and close windows
@@ -73,8 +304,27 @@ def filters_parameters (file):
     return treshold, axis_location, scale, hor_axis
 
 
+# Function that calculates all timestamps in the format mm:ss
+def timestamp(fps, tot_frame):
+    stamp_array = np.array([])
 
-def average_center(file,treshold):
+    secs = 0
+    mins = 0
+
+    for i in range(tot_frame//fps):
+
+        stamp_array = np.append(stamp_array, (("%02d:%02d") % (mins, secs)))
+
+        secs = secs + 1
+
+        if secs == 60:
+            mins = mins + 1
+            secs = 0
+        
+    return stamp_array
+
+
+def average_center(file, treshold):
 
     # Faz a abertura do video
     video = cv.VideoCapture(file)
@@ -126,54 +376,6 @@ def average_center(file,treshold):
     
     return x_sum//n_frames, y_sum//n_frames
 
-
-####################################################
-#            Ellipse related functions             #
-####################################################
-
-# Returns the value of ellipsis major axis "a"
-def get_a():
-    import global_  
-    return np.sqrt((global_.ellipse_vertex[0][0] - global_.ellipse_vertex[1][0])**2 + 
-            (global_.ellipse_vertex[0][1] - global_.ellipse_vertex[1][1])**2)
-
-    
-# Returns the value of ellipsis minor axis "b" 
-def get_b():
-    import global_
-    return np.sqrt((global_.ellipse_vertex[2][0] - global_.ellipse_vertex[3][0])**2 + 
-            (global_.ellipse_vertex[2][1] - global_.ellipse_vertex[3][1])**2)
-
-
-# Get ellipses main parameters ("a","b",Area and Volume)
-def ellipse_paramaters(d_pixel):         
-
-    # Get ellipsis major and minor axis
-    a = get_a()
-    b = get_b()
-            
-    # Calculate ellipses area and volume
-    area = a*np.pi*b
-    volume = int((1/6)*np.pi*a*b**2) 
-
-    return int(a*d_pixel), int(b*d_pixel), int(area*d_pixel**2) ,int(volume*d_pixel**3)
-
-def ellipse_size():
-    import global_
-    #global ellipse_center, ellipse_height, ellipse_width, ellipse_size #ellipse_vertex
-    
-    # Calcula o centro da elipse
-    global_.ellipse_center = ((global_.ellipse_vertex[2][0] + global_.ellipse_vertex[3][0])//2,(global_.ellipse_vertex[0][1] + global_.ellipse_vertex[1][1])//2)
-
-    global_.ellipse_height = int(functions.distance(global_.ellipse_vertex[0][0],global_.ellipse_vertex[0][1],
-                            global_.ellipse_vertex[1][0],global_.ellipse_vertex[1][1]))
-    global_.ellipse_width = int(functions.distance(global_.ellipse_vertex[2][0],global_.ellipse_vertex[2][1],
-                            global_.ellipse_vertex[3][0],global_.ellipse_vertex[3][1]))
-    global_.ellipse_size = (global_.ellipse_width,global_.ellipse_height)
-
-    return
-
-
 ####################################################
 #        Revolution Solid related functions        #
 ####################################################
@@ -204,7 +406,7 @@ def vol_solid_revo(cont,axis):
 
     fx2 = fx**2
 
-    v1 = np.sum(fx2)
+    v1 = np.sum(fx2)/2
     a1 = np.sum(fx)
 
     a = int(np.amin(left_cont_y) )
@@ -214,7 +416,7 @@ def vol_solid_revo(cont,axis):
 
     fx2 = fx**2
 
-    v2 = np.sum(fx2)
+    v2 = np.sum(fx2)/2
     a2 = np.sum(fx)
 
     v = v1 + v2

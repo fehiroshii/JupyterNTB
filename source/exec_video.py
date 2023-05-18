@@ -1,47 +1,18 @@
 import ipywidgets as widgets
-import ipywidgets as widgets
 from IPython.display import display, clear_output
 from ipywidgets import Layout, Label
 import numpy as np
 
-
-import get
-
 import cv2 as cv
 
-
-
-from matplotlib import pyplot as plt
+import entities
+import results
 import get
 import functions
 import cfg
 
-d_pixel = 3.5 # Distancia entre pixel = 3.5 um
 
-
-def get_paramaters2(d_px,c,x_ax,y_ax):
-
-    left_x = np.array([])
-    right_x = np.array([])
-
-    interval = 5
-
-    for i in range (len(c)):
-        if abs(c[i][0][1] - y_ax) <= 5:
-            if c[i][0][0] <= x_ax:
-                left_x = np.append(left_x,x_ax - c[i][0][0])
-            else:
-                right_x = np.append(right_x,c[i][0][0] - x_ax)
-
-    topmost = tuple(c[c[:,:,1].argmin()][0])
-    bottommost = tuple(c[c[:,:,1].argmax()][0])
-
-    b = np.average(left_x) + np.average(right_x)
-    a = bottommost[1] - topmost[1]
-   
-    volume = int((1/6)*np.pi*a*b**2) 
-
-    return int(a*d_px), int(b*d_px) ,int(volume*d_px**3)
+d_pixel = 3.5  # Distancia entre pixel = 3.5 um
 
 
 def video_progression(args):
@@ -244,7 +215,8 @@ def modify_elipse(action, x, y, flags, parameters):
 
     return
 
-def menu_start():
+def new_menu():
+    global menu_path, button_start, start_menu
 
     # Configure widgets
     menu_path = widgets.Text(
@@ -255,299 +227,520 @@ def menu_start():
         layout=Layout(width='40%')
     )
 
-    menu_px = widgets.BoundedFloatText(
-        value=3.5,
-        min=0,
-        max = 1000,
-        step=0.1,
-        description='',
-        disabled=False,
-        layout=Layout(width='8%')
-    )
-
     button_start = widgets.Button(
-        description='Start Analysis',
+        description='Load Video',
         disabled=False,
-        button_style='', # 'success', 'info', 'warning', 'danger' or ''
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
         tooltip='Click me',
-        icon='check' # (FontAwesome names without the `fa-` prefix)
+        icon='check'  # (FontAwesome names without the `fa-` prefix)
     )
 
-    
-    px = widgets.HBox([Label("Distance between pixels"),menu_px,Label('μm')])
-    start_menu = widgets.VBox([menu_path,px,button_start])
+    start_menu = widgets.VBox([menu_path, button_start])
+
+    button_start.on_click(show_menu)  # Define callback function
+
     display(start_menu)
 
 
-    def start_analysis (a):
 
-        file = str(menu_path.value).replace('\\' ,"/")      #Get file location
-   
-        binary_treshold, rot_axis_loc, scale, hor_axis = get.filters_parameters(file)
+def show_menu(a):
+    clear_output(wait=False)
+    global prev_x0, prev_x1, image, main, start_menu,logs_out,folder
+    from ipywidgets import interact, interactive, fixed, interact_manual
 
-        import global_
-        global_.avg_x_center, global_.avg_y_center = get.average_center(file,binary_treshold)
+    import warnings
+    warnings.simplefilter(action='ignore', category=FutureWarning)
 
-        video = cv.VideoCapture(file)   # Open video
-
-        # Test if video was correctly open
-        if video.isOpened: 
-            print("Was open correctly")
+    # Initialize main classes used for calculations
+    VideoInfo = entities.VideoInfo(menu_path.value)
+    Ellipse = entities.Ellipse(0)
+    ManualEllipse = entities.ManualEllipse(0,0)
+    RevSolid = entities.RevolutionSolid(0)
     
-            # get video fps and number of frames
-            fps = int(video.get(cv.CAP_PROP_FPS))
-            total_frame = video.get(cv.CAP_PROP_FRAME_COUNT)
-            print("Video fps:",fps,"fps")
     
-        else:
-            print("Video wasn't opened corretly")
-            exit    
+    file = VideoInfo.file
+    folder = VideoInfo.folder
+    name = VideoInfo.name
 
-        kernel_size = 5
+    vd_display = cv.VideoCapture(file)   # Open video
 
-        alpha = 0.6
-        beta = (1.0 - alpha)
+    total_frame = VideoInfo.total_frame
+    fps = VideoInfo.fps
 
-        method = False
+    # Get list of all video timestamp array as (00:00, 00:01, ...)
+    options = VideoInfo.time_options 
 
-        save = False
-        canny_array = []
-        superimposed_aray = []
-        nai = []
-        ellipse_param = ()
+    # Read first frame and converts to binary
+    res, frame = vd_display.read()
+    is_success, im_buf_arr = cv.imencode(".png", frame)
+    byte_im1 = im_buf_arr.tobytes()
 
-        time = 0
+    prev_x0 = 0
+    prev_x1 = total_frame - 1
 
-        time_axis = np.zeros(int(total_frame))
-        area_axis = np.zeros(int(total_frame))
-        width_axis = np.zeros(int(total_frame))
-        height_axis = np.zeros(int(total_frame))
-        width_axis2 = np.zeros(int(total_frame))
-        height_axis2 = np.zeros(int(total_frame))
-        volume_axis = np.zeros(int(total_frame))
-        volume_axis2 = np.zeros(int(total_frame))
-        ellipse_area_axis = np.zeros(int(total_frame))
-        rev_volume_axis = np.zeros(int(total_frame))
-        rev_area_axis = np.zeros(int(total_frame))
+    prev_x0 = 0
+    prev_x1 = len(options) - 1
 
-        ellipse_backup = np.zeros(int(total_frame),dtype=object)
-        rec_backup = np.zeros(int(total_frame),dtype=object)
-        ellipse_vertex_backup = np.zeros(int(total_frame),dtype=object)
+    # Configure widgets for left menu
+    load_path = widgets.Text(
+        value= menu_path.value,
+        placeholder='Type something',
+        description='Path:',
+        disabled=False,
+        layout=Layout(width='95%')
+    )
 
-        end = False
-        join= False
-        stop = False
-        play = False
+    button_load = widgets.Button(
+        description='Load Video',
+        disabled=False,
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me',
+        icon='check',  # (FontAwesome names without the `fa-` prefix)
+        layout=Layout(width='95%')
+    )
 
-        first = True
+    select_video = widgets.Select(
+        options=[name],
+        value=name,
+        # rows=10,
+        description='Video:',
+        disabled=False,
+        layout=Layout(width='95%')
+    )
 
-        global skip, timer
+    left_menu = widgets.VBox([load_path, button_load, select_video])
 
-        skip = False
-        timer = 0
+    # Configure widgets for main menu
+    range_bar = widgets.SelectionRangeSlider(
+        options=options,
+        index=(0, len(options)-1),
+        description='',
+        disabled=False
+    )
 
-        import global_
-        global_.ellipse_vertex = np.zeros((4,2))        
+    image = widgets.Image(
+        value=byte_im1,
+        format='png',
+        width=320,
+        height=240
+    )
 
-        #Loops video frame by frame
-        while(not end):
-            
-            if join == False:
-            
-                # Get next frame
-                ret, frame = video.read()   
+    main_menu = widgets.VBox([image, range_bar])
 
-                # Get current video time in seconds 
-                video_time = video.get(cv.CAP_PROP_POS_MSEC)/1000
+    button_roi = widgets.Button(
+        description='Select ROI',
+        disabled=False,
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me',
+        icon='square'  # (FontAwesome names without the `fa-` prefix)
+    )
 
-                # Define index of next, current and previous frame
-                next_frame = video.get(cv.CAP_PROP_POS_FRAMES)
-                current_frame = next_frame - 1
-                previous_frame = current_frame - 1
-        
-                # Creates a copy of unaltered frame
-                cache = np.copy(frame)
-                
-            else:
-                frame = np.copy(cache)
+    button_calibrate = widgets.Button(
+        description='Calibration',
+        disabled=False,
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me',
+        icon='gear'  # (FontAwesome names without the `fa-` prefix)
+    )
 
-            # Check if the frame is valid
-            if ret:
+    button_preview = widgets.Button(
+        description='Preview Video',
+        disabled=True,
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me',
+        icon='eye'  # (FontAwesome names without the `fa-` prefix)
+    )
 
-                # Apply filters on frame
-                filtered = functions.filters(frame)   
+    button_analysis = widgets.Button(
+        description='Analyse Video',
+        disabled=True,
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me',
+        icon='crosshairs'  # (FontAwesome names without the `fa-` prefix)
+    )
 
-                # Execute on first iteraction
-                if first == True:
-                    
-                    # Get frame information
-                    frame_dimentions = frame.shape
-                    frame_height = frame.shape[0]
-                    frame_width = frame.shape[1]
-                    frame_channels = frame.shape[2]
-                    frame_size = (frame_width,frame_height)      
-                    print(frame_size)
-                    
-                    # Create setup windows
-                    cv.namedWindow('Comandos', cv.WINDOW_NORMAL)
-                    cv.resizeWindow('Comandos', 700, 10)
-                    cv.createTrackbar('Frame:', 'Comandos', int(current_frame), int(total_frame), video_progression)
-                    first = False          
-                    
-                # Aplica o filtro binario e detecta a borda do coracao
-                _ , binary_img = cv.threshold(filtered,binary_treshold,255,cv.THRESH_BINARY) # 240
-                binary_edges = cv.Canny(binary_img, 50, 100, kernel_size, L2gradient= True)
+    loading_bar = widgets.IntProgress(
+        value=0,
+        min=0,
+        max=10,
+        description='Loading',
+        bar_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        style={'bar_color': '#66BB6A'},
+        orientation='horizontal',
+        layout=Layout(width='90%', height='13px')
+    )
 
-                # Converte edges para opencv e sobrepoe o resultado em cima do frame original
-                binary_edges_convert = cv.cvtColor(binary_img,cv.COLOR_GRAY2BGR)
-                binary_superiposed = cv.addWeighted(frame, alpha, binary_edges_convert, beta, 0.0)
+    weight = 120.1  # Peso = 120.1 mg
 
-                # Encaixa a melhor elipse no contortno do coração
-                contours, main_contour, global_.ellipse_param, rec, drawing, area, method,stop = functions.fit_ellipse(binary_img,method,join,stop,scale)
-                
-                if ellipse_backup[int(current_frame)] != 0:
-                    global_.ellipse_param = ellipse_backup[int(current_frame)]
-                    global_.ellipse_center = (int(global_.ellipse_param[0][0]),int(global_.ellipse_param[0][1]))
-                    global_.ellipse_size = (int(global_.ellipse_param[1][0]),int(global_.ellipse_param[1][1]))
-                    global_.ellipse_angle = int(global_.ellipse_param[2])
-                    global_.ellipse_param = (global_.ellipse_center,global_.ellipse_size,global_.ellipse_angle)
+    AllWidgets = results.AllWidgets(weight, loading_bar)
 
-                    rec = rec_backup[int(current_frame)]
-                    global_.ellipse_vertex = ellipse_vertex_backup[int(current_frame)]
+    # Hides loading menu until user press analyse button
+    loading_bar.layout.visibility = 'hidden'
+    
+    right_menu = widgets.VBox([button_roi, button_calibrate, button_preview,
+                               button_analysis], layout=Layout(justify_content='flex-start'))
 
-                cv.ellipse(frame, global_.ellipse_param, (90,90,255), 1)    # Draw ellipse on main frame
-                
-                # Abre janela com o frame original, filtrado, bordas detectadas e sobreposta em cima do frame original 
-                cv.imshow('Original',frame)
-                cv.imshow('Processado',binary_img)
-                cv.imshow('Canny Binario Sobreposto',binary_superiposed)
-                cv.imshow('Representacao',drawing)
-                #cv.imshow('Informacao',info)
-
-                #if time == 0:
-                    #cv.createTrackbar('Angulo:', 'Comandos', int(ellipse_param[2]), 179, ellipse_rotation)
-                                
-                cv.setMouseCallback('Original', modify_elipse,[frame,rec,cache,d_pixel])
-                    
-                while True:
-                    key = cv.waitKey(10)
-
-                    if key != -1 or skip == True or play == True:
-                        break
-
-                if play == False and skip == False:
-
-                    # Wait until user press a key that is listed on cfg
-                    while not(key in cfg.key_list) :
-                        if play == False:
-                            key = cv.waitKey(0)
-                        else:
-                            key = cv.waitKey(1)
-                            if key == cfg.play:
-                                play = False
-                                key = 0
-                                print("ENTE")
-                            #time.sleep(1/fps)
-
-                    # Se o comando for "quit" ou não houver mais frames no video, entao o loop é finalizado
-                    if (key == cfg.close) or (not ret):
-                        end = True
-                        join = False
-                    elif key == cfg.play:
-                        play = not(play)                
-                        #method = True 
-                        #join = False
-                    elif key == ord('j'):
-                        join = True
-                    elif key == cfg.nxt:
-                        join= False
-                        cv.setTrackbarPos('Frame:', 'Comandos',int(next_frame))
-                    elif key == cfg.prv:
-                        join= False
-                        cv.setTrackbarPos('Frame:', 'Comandos',int(previous_frame))
-
-                else:
-                    if not ret:
-                        join = False
-                        end = True
-
-                if join == False:
-
-                    height,width,ellipse_area,volume = get.ellipse_paramaters(d_pixel)
-                    height2,width2,volume2 = get_paramaters2(d_pixel,contours,rot_axis_loc,hor_axis)     
-                    volume_axis2[int(current_frame)] = volume2
-                    height_axis2[int(current_frame)] = height2
-                    width_axis2[int(current_frame)] = width2
-                    vol_rev, area_rev = get.vol_solid_revo(contours,rot_axis_loc) 
-
-                    # Guarda os valores do tempo, area e largura
-                    time_axis[int(current_frame)] = video_time
-                    area_axis[int(current_frame)] = area*d_pixel**2
-                    volume_axis[int(current_frame)] = volume
-                    height_axis[int(current_frame)] = height
-                    width_axis[int(current_frame)] = width
-                    ellipse_area_axis[int(current_frame)] = ellipse_area
-                    rev_volume_axis[int(current_frame)] = vol_rev
-                    rev_area_axis[int(current_frame)] = area_rev
-                    import global_
-                    ellipse_backup[int(current_frame)] = global_.ellipse_center,global_.ellipse_size,global_.ellipse_angle
-                    rec_backup[int(current_frame)] = rec
-                    
-                    import global_
-                    ellipse_vertex_backup[int(current_frame)] = global_.ellipse_vertex
-                    
-                    if key == cfg.prv:
-                        if previous_frame >= 0:
-                            video.set(cv.CAP_PROP_POS_FRAMES, previous_frame)
-                            time = time - 1/fps
-                        else:
-                            previous_frame = 0
-                            time = 0
-                    else:
-                        time = time + 1/fps
-
-                    skip = False      
+    main_ui = widgets.HBox([left_menu, main_menu, right_menu], layout=Layout(justify_content='center'))
 
 
-            else:
-                break  
-            
-        video.release()
-        cv.destroyAllWindows()    
+    all_ui = widgets.VBox([main_ui, loading_bar])
 
-        del video
+    global out, first
 
-        if (key == cfg.close):
-            time_axis = time_axis[0:int(current_frame)]
-            area_axis = area_axis[0:int(current_frame)]
-            volume_axis2 = volume_axis2[0:int(current_frame)]
-            height_axis2 = height_axis2[0:int(current_frame)]
-            width_axis2 = width_axis2[0:int(current_frame)]
-            ellipse_area_axis = ellipse_area_axis[0:int(current_frame)]
-            volume_axis = volume_axis[0:int(current_frame)]
-            height_axis = height_axis[0:int(current_frame)]
-            width_axis = width_axis[0:int(current_frame)]
-            rev_volume_axis = rev_volume_axis[0:int(current_frame)]
-            rev_area_axis = rev_area_axis[0:int(current_frame)]
+    def f(x):   
+        global prev_x0, prev_x1, image, main, out
+        frame_number = 0
+        if x[1] != prev_x1:
+            frame_number = x[1]
+            prev_x1 = x[1]
+        elif x[0] != prev_x0:
+            frame_number = x[0]
+            prev_x0 = x[0]
 
-        ellipse_vol_const = (1/6)*np.pi*np.average(height_axis)*(width_axis)**2
-
-        import results
-
-        detection_method = 1  # 1 = Detecção por area do contorno do coracao
-        weight = 120.1 # Peso = 120.1 mg
-
-        results.show_results(weight,time_axis,width_axis,height_axis,width_axis2,height_axis2,
-                        area_axis,rev_area_axis,ellipse_area_axis,
-                        volume_axis,rev_volume_axis,ellipse_vol_const,volume_axis2,
-                        detection_method)
+        vd_display.set(cv.CAP_PROP_POS_FRAMES, frame_number)
+        res, frame = vd_display.read()
+        is_success, im_buf_arr = cv.imencode(".png", frame)
+        byte_im1 = im_buf_arr.tobytes()
+        image.value = byte_im1
 
         return
+    
+    def update_image(curr_indx):
+        global prev_x0, prev_x1, image, main, out
+        frame_number = 0
+        if range_bar.index[1] != prev_x1:
+            frame_number = range_bar.index[1]
+            prev_x1 = range_bar.index[1]
+        elif range_bar.index[0] != prev_x0:
+            frame_number = range_bar.index[0]
+            prev_x0 = range_bar.index[0]
 
+        vd_display.set(cv.CAP_PROP_POS_FRAMES, frame_number*fps)
+        res, frame = vd_display.read()
+        is_success, im_buf_arr = cv.imencode(".png", frame)
+        byte_im1 = im_buf_arr.tobytes()
+        image.value = byte_im1
+
+    out = widgets.interactive_output(update_image, {'curr_indx': range_bar})
+
+    display(all_ui, out)
+
+    def load_new(a):
+        VideoInfo.get_current(load_path.value)
+        select_video.options = VideoInfo.video_options
+
+    def start_roi(a):
+        VideoInfo.roi = calibrate_roi(file, range_bar.index)
+
+    def start_calibration(a):
+        length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
+        thold_bin, rotational_axis, scale, hor_axis = get.filters_parameters(
+            file, length, VideoInfo.roi)
+
+        # Update classes parameters
+        Ellipse.scale = scale
+        Ellipse.thold = thold_bin
+        ManualEllipse.hor_ax = hor_axis
+        ManualEllipse.vrt_ax = rotational_axis
+        RevSolid.rot_axis = rotational_axis
+
+        # Enable analysis and preview button
+        button_analysis.disabled = False
+        button_preview.disabled = False
+    
+    def start_preview(a):
+        length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
+        preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse)
+
+    def start_analysis2(a):
+        Ellipse.clear_records()
+        ManualEllipse.clear_records()
+        RevSolid.clear_records()
+
+        length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
+
+        results = analyse(file, length, VideoInfo.roi, Ellipse.thold,
+                          Ellipse, ManualEllipse, RevSolid, AllWidgets)
         
+        AllWidgets.save_records(results)
+        AllWidgets.displayed = True
+
+    # Define callback function
+    button_load.on_click(load_new)
+    button_roi.on_click(start_roi)
+    button_calibrate.on_click(start_calibration)
+    button_preview.on_click(start_preview)
+    button_analysis.on_click(start_analysis2)
 
 
-    button_start.on_click(start_analysis)  # Define callback function
+# Returns a ROI (Region Of Interest) based on a rectangle defined by user
+def calibrate_roi(file, lenght):
+
+    video = cv.VideoCapture(file)        
+    video.set(cv.CAP_PROP_POS_FRAMES, lenght[0])
+
+    first = True
+    count = 0
+
+    # Finds a frame with maximum luminous intensity (Diastole) and a 
+    # frame with minimum luminous intesity (Systole) in the range defined by user
+    while (count <= ((lenght[1]-lenght[0])//3)):
+
+        ret, img = video.read()
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        _, bw_img = cv.threshold(gray,160,255,cv.THRESH_BINARY)
+
+        wht_px = np.count_nonzero(bw_img)
+
+        # Execute on first interaction
+        if first:
+            max_wht_px = wht_px
+            min_wht_px = wht_px
+            max_frame = img
+            min_frame = img
+            first = False
+
+        if wht_px > max_wht_px:
+            max_frame = img
+            max_wht_px = wht_px
+
+        if wht_px < min_wht_px:
+            min_frame = img
+            min_wht_px = wht_px
+
+        count = count + 1
+
+    original_min_frame = np.copy(min_frame)
+
+    # Loop that ends when user finishes ROI calibration
+    while True:
+    
+        # Create a window and enables user to select a ROI
+        roi = cv.selectROI("ROI on Diastole", max_frame, showCrosshair=False)
+
+        # Draw selected ROI on a systole frame
+        systole_rec = cv.rectangle(min_frame, 
+                                  (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), 
+                                  (0, 255, 0), 3)
+        cv.imshow("ROI on Systole", systole_rec)
+
+        key = -1
+
+        while not (key in[13, 27]):
+            key = cv.waitKey(1)
+    
+        # Checks if user pressed "Enter" and finishes ROI calibration
+        if key == 13:
+            roi = np.array([(roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3])])
+            video.release()
+            cv.destroyAllWindows()
+            break
+
+        # Checks if user pressed "Esc" and redo ROI calibration
+        elif key == 27:
+            min_frame = np.copy(original_min_frame)
+            cv.destroyAllWindows()
+    
+    return roi
 
 
-    return
+def preview(file, range, roi, Ellipse, ManualEllipse):
+
+    video = cv.VideoCapture(file)   # Open video
+    video.set(cv.CAP_PROP_POS_FRAMES, range[0])
+
+    end = False
+    first = True
+    display_img = 0
+
+    # Loops video frame by frame
+    while (not end):
+
+        # Get next frame
+        ret, frame = video.read()
+
+        # Define index of next, current and previous frame
+        next_frame = int(video.get(cv.CAP_PROP_POS_FRAMES))
+        current_frame = int(next_frame - 1)
+
+        # Check if the frame is valid
+        if ret:
+
+            frame_crop = frame[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+
+            # Apply filters on frame
+            filtered = functions.filters(frame_crop)
+
+            # Execute on first iteraction
+            if first == True:
+
+                # get video fps and number of frames
+                fps = int(video.get(cv.CAP_PROP_FPS))
+
+                first = False
+
+            # Apply binary filter
+            _, binary_img = cv.threshold(filtered, Ellipse.thold,
+                                         255, cv.THRESH_BINARY)
+            
+            # Add a black border to both images
+            binary_img = cv.copyMakeBorder(
+                binary_img,
+                top= roi[0][1] + 1,
+                bottom=frame.shape[0] - roi[1][1] + 1,
+                left=roi[0][0] +1,
+                right=frame.shape[1] - roi[1][0] + 1,
+                borderType=cv.BORDER_CONSTANT,
+                value=(0, 0, 0)
+            )
+
+            # Fit ellipse on the binary image and returns an image
+            heart_contour, drawing = Ellipse.fit(binary_img, roi)
+
+            if display_img == 0:
+                cv.imshow('Applied Settings', drawing)
+            elif display_img == 1:
+                cv.rectangle(frame, roi[0], roi[1], cfg.REC_CLR, 2)
+                cv.ellipse(frame, Ellipse.param, cfg.ellipse_color, 1)
+                cv.imshow('Applied Settings', frame)
+            
+            key = cv.waitKey(1000//fps)
+            
+            if key == ord('1'):
+                display_img = 0
+            elif key == ord('2'):
+                display_img = 1
+            elif key == cfg.close:
+                end = True
+
+        else:
+            break
+
+        if (not ret) or (current_frame == range[1]):
+            end = True
+
+    video.release()
+    cv.destroyAllWindows()
+
+
+def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, AllWidgets):
+
+    np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+    
+    video = cv.VideoCapture(file)   # Open video
+    video.set(cv.CAP_PROP_POS_FRAMES, range[0])
+
+    total_frame = video.get(cv.CAP_PROP_FRAME_COUNT)
+
+    time_axis = np.zeros(int(total_frame), dtype=object)
+    cont_area_record = np.zeros(int(total_frame), dtype=object)
+
+    end = False
+
+    first = True
+
+    outt0 = widgets.Output()
+    
+    
+    AllWidgets.loading_bar.max = range[1]
+    AllWidgets.loading_bar.min = range[0]
+    AllWidgets.loading_bar.value = range[0]
+    AllWidgets.loading_bar.layout.visibility = 'visible'
+
+    # Loops video frame by frame
+    while (not end):
+
+        # Get next frame
+        ret, frame = video.read()
+
+        # Get current video time in seconds
+        video_time = video.get(cv.CAP_PROP_POS_MSEC)/1000
+
+        # Define index of next, current and previous frame
+        next_frame = int(video.get(cv.CAP_PROP_POS_FRAMES))
+        current_frame = int(next_frame - 1)
+
+        AllWidgets.loading_bar.value = current_frame
+
+        # Check if the frame is valid
+        if ret:
+
+            frame_crop = frame[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+
+            # Apply filters on frame
+            filtered = functions.filters(frame_crop)
+
+            # Execute on first iteraction
+            if first == True:
+
+                # get video fps and number of frames
+                fps = int(video.get(cv.CAP_PROP_FPS))
+
+                first = False
+
+            # Apply binary filter
+            _, binary_img = cv.threshold(filtered, thold_bin,
+                                         255, cv.THRESH_BINARY)
+            
+            # Add a black border to both images
+            binary_img = cv.copyMakeBorder(
+                binary_img,
+                top= roi[0][1] + 1,
+                bottom=frame.shape[0] - roi[1][1] + 1,
+                left=roi[0][0] +1,
+                right=frame.shape[1] - roi[1][0] + 1,
+                borderType=cv.BORDER_CONSTANT,
+                value=(0, 0, 0)
+            )
+
+            # Fit ellipse on the binary image and returns an image
+            heart_contour, drawing = ellipse.fit(binary_img, roi)
+
+            cont_area_record[current_frame - range[0]] = cv.contourArea(heart_contour)
+
+
+            # Update ellipse's area, volume, height and width records
+            ellipse.record_properties(current_frame - range[0])               
+
+            # Update revolution solid's area and volume records
+            rev_solid.record_properties(heart_contour, 
+                                        current_frame - range[0])
+
+            # Update manual ellipse's area, volume, height and width records
+            manual_ellipse.record_properties(heart_contour, 
+                                             current_frame- range[0])
+
+            # Keep information of current time
+            time_axis[int(current_frame - range[0])] = video_time
+
+        else:
+            break
+
+
+        if (not ret) or (current_frame == range[1]):
+            end = True
+            cont_area_record = cont_area_record[0:next_frame - range[0]]
+            time_axis = time_axis[0:next_frame - range[0]]
+            break
+
+
+    video.release()
+
+
+    ellipse_vol_const = (
+        1/6)*np.pi*np.average(ellipse.height_record)*(ellipse.width_record)**2
+
+    import results
+
+    detection_method = 1  # 1 = Detecção por area do contorno do coracao
+    weight = 120.1  # Peso = 120.1 mg
+
+    AllWidgets.loading_bar.layout.visibility = 'hidden' # Hides loading bar
+
+    results.show_results(weight, time_axis,
+                         ellipse, manual_ellipse, rev_solid, ellipse_vol_const,
+                         cont_area_record, 3.5, detection_method, folder, outt0, AllWidgets)   
+    
+    return (weight, time_axis,
+            ellipse, manual_ellipse, rev_solid, ellipse_vol_const,
+            cont_area_record, 3.5, detection_method, folder, outt0)

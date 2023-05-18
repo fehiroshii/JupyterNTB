@@ -8,31 +8,31 @@ cfg1 = [
                             {
                                 "selector": "table",
                                 "props": [("border-collapse", "collapse"),
-                                         ("margin", "25px 0"),
-                                         ("font-size", "13px"),
-                                         ("font-family", "sans-serif"),
-                                         ("min-width", "400px"),
-                                         ("box-shadow", "0 0 20px rgba(0, 0, 0, 0.15)")],
+                                          ("margin", "25px 0"),
+                                          ("font-size", "13px"),
+                                          ("font-family", "sans-serif"),
+                                          ("min-width", "400px"),
+                                          ("box-shadow", "0 0 20px rgba(0, 0, 0, 0.15)")],
                             },
    
                             {
-                                "selector":"thead",
-                                "props": [("background-color", "#009879"), 
+                                "selector": "thead",
+                                "props": [("background-color", "#009879"),
                                           ("color", "white"),
                                           ("font-size", "12px"),
                                           ("text-align", "right"),]
                             },
                             
                             {
-                                "selector":"th.row_heading",
+                                "selector": "th.row_heading",
                                 "props": [("padding", "12px 15px"),
-                                         ("font-size", "13px")]
+                                          ("font-size", "13px")]
                             },
     
                             {
-                                "selector" :"td",
+                                "selector": "td",
                                 "props": [("padding", "12px 15px"),
-                                         ("font-size", "13px")]
+                                          ("font-size", "13px")]
                             }
     
 
@@ -47,12 +47,12 @@ config1 = [
                             },
    
                             {
-                                "selector":"thead",
+                                "selector": "thead",
                                 "props": [("background-color", "rgb(61,164,166)"), 
                                           ("color", "white"),
                                           ("padding", "10px"),
-                                          ("font-size", "12pt"),("text-align", "right"),
-                                         ("border" , "2px solid white"),("font-family","arial")]
+                                          ("font-size", "12pt"), ("text-align", "right"),
+                                          ("border", "2px solid white"), ("font-family", "arial")]
                             },
                             
                             {

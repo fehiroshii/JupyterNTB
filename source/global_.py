@@ -1,4 +1,5 @@
 import numpy as np
+from ipywidgets import Output
 
 ellipse_vertex = np.zeros((4,2))
 
@@ -16,3 +17,6 @@ ellipse_height = 0
 ellipse_width = 0
 ellipse_size = 0
 ellipse_angle = 0
+
+
+live_logs = Output()
