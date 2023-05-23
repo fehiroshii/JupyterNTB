@@ -37,7 +37,7 @@ class VideoInfo():
         video.release()
 
     def add_video(self, path):
-        self.get_current(path)
+        None
 
 
 class RevolutionSolid():
