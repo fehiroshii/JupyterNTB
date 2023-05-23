@@ -1,6 +1,6 @@
 # Jupyter Notebook interativo para cálculo de parâmetros hemodinâmicos de vídeos de coração do inseto
 
-<font size=3>Autores: [Felipe Hiroshi Kano Inazumi](mailto:f215696@dac.unicamp.br),
+<font size=5>Autores: [Felipe Hiroshi Kano Inazumi](mailto:f215696@dac.unicamp.br),
 [Nelly Catherine Barbosa Calderon](mailto:n160942@dac.unicamp.br), 
 [Adriano Santana](mailto:adriano.rsantana@gmail.com),
 [Rosana Almada Bassani](mailto:arbassani@unicamp.br), 
