@@ -12,7 +12,7 @@
 
 O software desenvolvido pode ser executado em um abiente do Google Colab ou através do Binder
 
-
+ [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/source/online/google_colab/main_ntb.ipynb)
  
  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/fehiroshii/JupyterNTB/main?labpath=%2Fsource%2Fmain_ntb.ipynb)
 
