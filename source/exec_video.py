@@ -2,7 +2,6 @@ import ipywidgets as widgets
 from IPython.display import display, clear_output
 from ipywidgets import Layout, Label
 import numpy as np
-
 import cv2 as cv
 
 import entities
@@ -10,6 +9,12 @@ import results
 import get
 import functions
 import cfg
+
+
+try:
+    from google.colab import drive
+except:
+    None
 
 
 d_pixel = 3.5  # Distancia entre pixel = 3.5 um
@@ -214,6 +219,51 @@ def modify_elipse(action, x, y, flags, parameters):
         
 
     return
+
+
+# Displays UI (menu) that should be used in Google Colab
+def menu_colab():
+    global menu_path, button_start, start_menu
+
+    # Configure widgets
+    menu_path = widgets.Text(
+        value='/content/drive/MyDrive/my_video.avi',
+        placeholder='Type something',
+        description='Video Path:',
+        disabled=False,
+        layout=Layout(width='40%')
+    )
+
+    button_login = widgets.Button(
+        description='Mount Google Drive',
+        disabled=False,
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me',
+        icon='check'  # (FontAwesome names without the `fa-` prefix)
+    )
+
+    button_start = widgets.Button(
+        description='Load Video',
+        disabled=True,
+        button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me',
+        icon='check'  # (FontAwesome names without the `fa-` prefix)
+    )
+
+    start_menu = widgets.VBox([menu_path, 
+                               widgets.HBox([button_login, button_start])])
+    
+
+    def login_request(a):
+        drive.mount('/content/drive')
+        button_login.disabled = True
+        button_start.disabled = False
+
+    button_login.on_click(login_request)  # Define callback function
+    button_start.on_click(show_menu)  # Define callback function
+
+    display(start_menu)
+
 
 def new_menu():
     global menu_path, button_start, start_menu

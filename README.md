@@ -10,21 +10,17 @@
 
 ## Execução Online 
 
-O software desenvolvido pode ser executado em um abiente do Google Colab ou através do Binder
+O software também pode ser executado de forma online em um ambiente Google Colab, sem a necessidade de instalação dos arquivos. Uma descrição detalhada do funcionamento do software online está inserida no documento README.MD na pasta/online deste mesmo projeto
 
  [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
  
  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/fehiroshii/JupyterNTB/main?labpath=%2Fsource%2Fmain_ntb.ipynb)
 
 
-## Instalação
-
-No atual momento, para a execução do software é necessário fazer o dowload de todos os arquivos localizados dentro da pasta source
-
 ### Pré-requisitos
 
 
-- Python 
+- InstalaPython 
 - Jupyter Notebook ou JupyterLab
 
 
@@ -35,6 +31,13 @@ No atual momento, para a execução do software é necessário fazer o dowload d
 | [OpenCV](https://opencv.org/)          |  4.6.0.66 |
 | [Scipy](https://scipy.org/)            |  1.8.1    |
 | [Pandas](https://pandas.pydata.org/)   | 1.2.3     |
+
+
+## Instalação
+
+No atual momento, para a execução do software é necessário fazer o dowload de todos os arquivos localizados dentro da pasta source
+
+
   
 
 ## Referências
