@@ -244,7 +244,7 @@ def menu_colab():
 
     button_start = widgets.Button(
         description='Load Video',
-        disabled=True,
+        disabled=False,
         button_style='',  # 'success', 'info', 'warning', 'danger' or ''
         tooltip='Click me',
         icon='check'  # (FontAwesome names without the `fa-` prefix)
@@ -399,8 +399,13 @@ def show_menu(a):
     # Hides loading menu until user press analyse button
     loading_bar.layout.visibility = 'hidden'
     
-    right_menu = widgets.VBox([button_roi, button_calibrate, button_preview,
-                               button_analysis], layout=Layout(justify_content='flex-start'))
+    vert_bar = widgets.IntSlider(0,0,VideoInfo.height,continuous_update = False)
+
+    
+
+    right_menu = widgets.Accordion(children=[vert_bar, widgets.Text()])
+    right_menu.set_title(0, 'Calibrate')
+    right_menu.set_title(1,'Analyse')
 
     main_ui = widgets.HBox([left_menu, main_menu, right_menu], layout=Layout(justify_content='center'))
 
@@ -439,6 +444,7 @@ def show_menu(a):
 
         vd_display.set(cv.CAP_PROP_POS_FRAMES, frame_number*fps)
         res, frame = vd_display.read()
+        VideoInfo.current_frame = frame
         is_success, im_buf_arr = cv.imencode(".png", frame)
         byte_im1 = im_buf_arr.tobytes()
         image.value = byte_im1
@@ -455,6 +461,7 @@ def show_menu(a):
         VideoInfo.roi = calibrate_roi(file, range_bar.index)
 
     def start_calibration(a):
+        '''
         length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
         thold_bin, rotational_axis, scale, hor_axis = get.filters_parameters(
             file, length, VideoInfo.roi)
@@ -469,7 +476,16 @@ def show_menu(a):
         # Enable analysis and preview button
         button_analysis.disabled = False
         button_preview.disabled = False
-    
+        '''
+        print("A")
+        frame_copy = np.copy(VideoInfo.current_frame)
+        cv.line(frame_copy, (vert_bar.value, 0),
+                (vert_bar.value, VideoInfo.height), (255, 0, 255), 1)
+        
+        is_success, im_buf_arr = cv.imencode(".png", frame_copy)
+        byte_im1 = im_buf_arr.tobytes()
+        image.value = byte_im1
+
     def start_preview(a):
         length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
         preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse)
@@ -493,6 +509,8 @@ def show_menu(a):
     button_calibrate.on_click(start_calibration)
     button_preview.on_click(start_preview)
     button_analysis.on_click(start_analysis2)
+
+    vert_bar.observe(start_calibration)
 
 
 

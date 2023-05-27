@@ -5,8 +5,6 @@ import cfg
 import functions
 import get
 
-from dataclasses import dataclass
-
 
 class VideoInfo():
     '''Class for keeping tracking of general video information'''
@@ -14,6 +12,7 @@ class VideoInfo():
     def __init__(self, path) -> None:
         self.video_options = []
         self.get_current(path)
+        self.current_frame = np.array([])
 
     def get_current(self, path):
         self.file = str(path).replace('\\', "/")  # Get file location
