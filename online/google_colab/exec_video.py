@@ -1,23 +1,20 @@
 import ipywidgets as widgets
 from IPython.display import display, clear_output
-from ipywidgets import Layout, Label
+from ipywidgets import Layout
 import numpy as np
 import cv2 as cv
+import sys
 
+from google.colab import drive
 
-
+# adding Folder_2 to the system path
+sys.path.insert(0, '/content/JupyterNTB/source/')
 
 import entities
 import results
 import get
 import functions
 import cfg
-
-
-try:
-    from google.colab import drive
-except:
-    None
 
 
 d_pixel = 3.5  # Distancia entre pixel = 3.5 um
@@ -496,6 +493,8 @@ def show_menu(a):
     button_calibrate.on_click(start_calibration)
     button_preview.on_click(start_preview)
     button_analysis.on_click(start_analysis2)
+
+
 
 
 # Returns a ROI (Region Of Interest) based on a rectangle defined by user
