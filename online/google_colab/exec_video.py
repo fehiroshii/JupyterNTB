@@ -375,7 +375,7 @@ def show_menu(a):
 
     button_analysis = widgets.Button(
         description='Analyse Video',
-        disabled=True,
+        disabled=False,
         button_style='',  # 'success', 'info', 'warning', 'danger' or ''
         tooltip='Click me',
         icon='crosshairs'  # (FontAwesome names without the `fa-` prefix)
@@ -399,13 +399,16 @@ def show_menu(a):
     # Hides loading menu until user press analyse button
     loading_bar.layout.visibility = 'hidden'
     
-    vert_bar = widgets.IntSlider(0,0,VideoInfo.height,continuous_update = False)
-
+    trsh_bar = widgets.IntSlider(254, 0, 254, continuous_update=False)
+    vert_bar = widgets.IntSlider(0, 0, VideoInfo.height,continuous_update = False)
+    hor_bar = widgets.IntSlider(0, 0, VideoInfo.width, continuous_update=False)
+    scale_bar = widgets.IntSlider(100, 0, 100,continuous_update = False)
+    all_bar = widgets.VBox([trsh_bar, vert_bar, hor_bar, scale_bar])
     
+    right_tabs = widgets.Accordion(children=[all_bar])
+    right_tabs.set_title(0, 'Calibrate')
 
-    right_menu = widgets.Accordion(children=[vert_bar, widgets.Text()])
-    right_menu.set_title(0, 'Calibrate')
-    right_menu.set_title(1,'Analyse')
+    right_menu = widgets.VBox([right_tabs, button_analysis])
 
     main_ui = widgets.HBox([left_menu, main_menu, right_menu], layout=Layout(justify_content='center'))
 
@@ -460,24 +463,75 @@ def show_menu(a):
     def start_roi(a):
         VideoInfo.roi = calibrate_roi(file, range_bar.index)
 
-    def start_calibration(a):
-        '''
-        length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
-        thold_bin, rotational_axis, scale, hor_axis = get.filters_parameters(
-            file, length, VideoInfo.roi)
+    def trsh_calibration(a):
+        # Get current treshold and scale from trackbar
+        scale = scale_bar.value
+        treshold = trsh_bar.value
 
-        # Update classes parameters
+        # Make copy of unaltered frame
+        frame_copy = np.copy(VideoInfo.current_frame)
+
+        # Crop image according to ROI
+        roi = VideoInfo.roi
+        frame_crop = frame_copy[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+
+        # Apply filters
+        frame_filtered = functions.filters(frame_crop)
+        _, binary_img = cv.threshold(frame_filtered, treshold,
+                                     255, cv.THRESH_BINARY)
+
+        # Add a black border
+        binary_img = cv.copyMakeBorder(
+            binary_img,
+            top=1,
+            bottom=1,
+            left=1,
+            right=1,
+            borderType=cv.BORDER_CONSTANT,
+            value=(0, 0, 0)
+        )
+
+        # Detect binary edges
+        binary_edges = cv.Canny(
+            binary_img, 50, 100, 5, L2gradient=True)
+
+        # Find contours
+        contours, _ = cv.findContours(binary_edges,
+                                      cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+
+        # Detect greatest contour and get its index
+        max_area = -1
+        for i, c in enumerate(contours):
+            if cv.arcLength(c, True) > max_area:
+                max_area = cv.arcLength(c, True)
+                max_i = i
+
+        # Apply scale to contours
+        scaled_cont = functions.scale_contour(contours[max_i],
+                                              scale/100)
+
+        # Place the detected contour on the right place on original frame
+        scaled_cont = scaled_cont + roi[0]
+
+        # Draw contours 
+        cv.drawContours(frame_copy, scaled_cont, -1, (255, 0, 255), 1)
+
+        # Obtain ellipse param as  (center x,center y), (height,width), ângle
+        min_center, min_dim, min_angle = cv.fitEllipseDirect(scaled_cont)
+
+        # Draw ellipses on frame
+        cv.ellipse(frame_copy, (min_center, min_dim, min_angle),
+                   (255, 0, 255), 1)
+
+        # Show both frames with ellipse adjusted
+        is_success, im_buf_arr = cv.imencode(".png", frame_copy)
+        byte_im1 = im_buf_arr.tobytes()
+        image.value = byte_im1
+
         Ellipse.scale = scale
-        Ellipse.thold = thold_bin
-        ManualEllipse.hor_ax = hor_axis
-        ManualEllipse.vrt_ax = rotational_axis
-        RevSolid.rot_axis = rotational_axis
+        Ellipse.thold = treshold
 
-        # Enable analysis and preview button
-        button_analysis.disabled = False
-        button_preview.disabled = False
-        '''
-        print("A")
+    def vert_calibration(a):
         frame_copy = np.copy(VideoInfo.current_frame)
         cv.line(frame_copy, (vert_bar.value, 0),
                 (vert_bar.value, VideoInfo.height), (255, 0, 255), 1)
@@ -485,6 +539,20 @@ def show_menu(a):
         is_success, im_buf_arr = cv.imencode(".png", frame_copy)
         byte_im1 = im_buf_arr.tobytes()
         image.value = byte_im1
+
+        ManualEllipse.vrt_ax = vert_bar.value
+        RevSolid.rot_axis = vert_bar.value
+
+    def hor_calibration(a):
+        frame_copy = np.copy(VideoInfo.current_frame)
+        cv.line(frame_copy, (0, hor_bar.value),
+                (VideoInfo.width, hor_bar.value,), (255, 0, 255), 1)
+        
+        is_success, im_buf_arr = cv.imencode(".png", frame_copy)
+        byte_im1 = im_buf_arr.tobytes()
+        image.value = byte_im1
+
+        ManualEllipse.hor_ax = hor_bar.value
 
     def start_preview(a):
         length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
@@ -500,18 +568,20 @@ def show_menu(a):
         results = analyse(file, length, VideoInfo.roi, Ellipse.thold,
                           Ellipse, ManualEllipse, RevSolid, AllWidgets)
         
-        AllWidgets.save_records(results)
+        AllWidgets.save_records(results)    
         AllWidgets.displayed = True
 
     # Define callback function
     button_load.on_click(load_new)
     button_roi.on_click(start_roi)
-    button_calibrate.on_click(start_calibration)
+    button_calibrate.on_click(vert_calibration)
     button_preview.on_click(start_preview)
     button_analysis.on_click(start_analysis2)
 
-    vert_bar.observe(start_calibration)
-
+    trsh_bar.observe(trsh_calibration)
+    vert_bar.observe(vert_calibration)
+    hor_bar.observe(hor_calibration)
+    scale_bar.observe(trsh_calibration)
 
 
 
