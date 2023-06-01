@@ -8,13 +8,9 @@
 
 <p style='text-align: justify;'> Este projeto tem como objetivo fazer o cálculo de parâmetros hemodinâmicos como débito cardíaco, fração de ejeção, volume de ejeção e fração de encurtamento a partir de vídeos contendo a atividade contrátil do coração do inseto </p> 
 
-## Execução Online 
+## Execução Online  [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
 
 O software também pode ser executado de forma online em um ambiente Google Colab, sem a necessidade de instalação dos arquivos. Uma descrição detalhada do funcionamento do software online está inserida no documento README.MD na pasta/online deste mesmo projeto
-
- [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
- 
- [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/fehiroshii/JupyterNTB/main?labpath=%2Fsource%2Fmain_ntb.ipynb)
 
 
 ### Pré-requisitos

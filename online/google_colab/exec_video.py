@@ -41,186 +41,6 @@ def video_progression(args):
     return
 
 
-
-def modify_elipse(action, x, y, flags, parameters):
-    
-    frame = np.copy(parameters[0])
-    #rec = parameters[1]
-    cache = np.copy(parameters[2])
-    d_pixel = parameters[3]
-
-    import global_
-
-    global edit
-    # Declara o vetor com os pontos da elipse como global
-    global ellipse_vertex, ellipse_angle, rec
-
-    global ellipse_center, ellipse_height, ellipse_width, ellipse_size
-
-    
-    if action == cv.EVENT_LBUTTONDOWN:
-
-#cv.ellipse(drawing,(ellipse_center,ellipse_size,ellipse_angle), (90,90,255), 1)
-
-        cv.ellipse(cache,global_.ellipse_param, (0,0,255), 1)
-        
-        if (((x> global_.ellipse_vertex[3][0]) and (x<global_.ellipse_vertex[2][0]) and (y>global_.ellipse_vertex[1][1]) and (y<global_.ellipse_vertex[0][1])
-            and (global_.ellipse_angle <=90)) or ((x<global_.ellipse_vertex[3][0]) and (x>global_.ellipse_vertex[2][0]) and (y<global_.ellipse_vertex[1][1]) 
-            and (y>global_.ellipse_vertex[0][1]) and (global_.ellipse_angle >90))) :
-
-            cv.circle(cache,(global_.ellipse_vertex[0][0],global_.ellipse_vertex[0][1]),0,(0,0,255),8) # Ponto de baixo da elipse
-            cv.circle(cache,(global_.ellipse_vertex[1][0],global_.ellipse_vertex[1][1]),0,(0,0,255),8) # Ponto de cima da elipse
-            cv.circle(cache,(global_.ellipse_vertex[2][0],global_.ellipse_vertex[2][1]),0,(0,0,255),8) # Ponto lateral direito da elipse
-            cv.circle(cache,(global_.ellipse_vertex[3][0],global_.ellipse_vertex[3][1]),0,(0,0,255),8) # Ponto lateral esquerdo da elipse
-            cv.circle(cache,(global_.ellipse_center[0],global_.ellipse_center[1]),0,(0,0,255),8) # Ponto lateral esquerdo da elipse
-
-            cv.circle(cache,(rec[0][0],rec[0][1]),0,(0,0,255),8) # Canto inferior esquerdo do retângulo
-            cv.circle(cache,(rec[1][0],rec[1][1]),0,(0,0,255),8) # Canto superior esquerdo do retângulo
-            cv.circle(cache,(rec[2][0],rec[2][1]),0,(0,0,255),8) # Canto superior direito do retângulo
-            cv.circle(cache,(rec[3][0],rec[3][1]),0,(0,0,255),8) # Canto inferior direito do retângulo
-            # Desenha o retângulo que envolve a elipse
-            box = np.array([[rec[0][0],rec[0][1]],[rec[1][0],rec[1][1]],[rec[2][0],rec[2][1]],[rec[3][0],rec[3][1]]])
-            cv.drawContours(cache,[box],0,(0,0,255),1)
-            cv.imshow('Original',cache)
-            edit = True
-        else:
-            cv.imshow('Original',cache)
-            edit = False
-
-
-    elif (action == cv.EVENT_MOUSEMOVE) and (flags == cv.EVENT_FLAG_LBUTTON):
-
-        #cv.circle(cache,(vertex_ellipse[0][0],vertex_ellipse[0][1]),0,(0,0,255),8) # Ponto de baixo da elipse
-        #cv.circle(cache,(vertex_ellipse[1][0],vertex_ellipse[1][1]),0,(0,255,255),8) # Ponto de cima da elipse
-        #cv.circle(cache,(vertex_ellipse[2][0],vertex_ellipse[2][1]),0,(0,0,255),8) # Ponto lateral direito da elipse
-        #cv.circle(cache,(vertex_ellipse[3][0],vertex_ellipse[3][1]),0,(0,0,255),8) # Ponto lateral esquerdo da elipse
-
-        #cv.circle(cache,(rec[0][0],rec[0][1]),0,(0,0,255),8) # Canto inferior esquerdo do retângulo
-        #cv.circle(cache,(rec[1][0],rec[1][1]),0,(0,0,255),8) # Canto superior esquerdo do retângulo
-        #cv.circle(cache,(rec[2][0],rec[2][1]),0,(0,0,255),8) # Canto superior direito do retângulo
-        #cv.circle(cache,(rec[3][0],rec[3][1]),0,(0,0,255),8) # Canto inferior direito do retângulo
-
-        
-        #cv.rectangle(cache,(rec[0][0],rec[0][1]),(rec[2][0],rec[2][1]),(0,255,0),1)
-
-        # Redimensionamento da parte de baixo da elipse
-        if functions.distance(global_.ellipse_vertex[0][0],global_.ellipse_vertex[0][1],x,y) < 10:
-            dif = global_.ellipse_vertex[0][1] - y
-            global_.ellipse_vertex[0][1] =  y
-            rec[0][1] -= dif
-            rec[3][1] -= dif            
-        
-        # Redimensionamento da parte de cima da elipse
-        elif functions.distance(global_.ellipse_vertex[1][0],global_.ellipse_vertex[1][1],x,y) < 10:
-            dif = global_.ellipse_vertex[1][1] - y
-            global_.ellipse_vertex[1][1] =  y
-            rec[1][1] -= dif
-            rec[2][1] -= dif
-
-        # Redimensionamento da parte lateral direita da elipse
-        elif functions.distance(global_.ellipse_vertex[2][0],global_.ellipse_vertex[2][1],x,y) < 10:
-            dif = global_.ellipse_vertex[2][0] - x
-            global_.ellipse_vertex[2][0] =  x
-            rec[2][0] -= dif
-            rec[3][0] -= dif
-        
-        # Redimensionamento da parte lateral esquerdo da elipse
-        elif functions.distance(global_.ellipse_vertex[3][0],global_.ellipse_vertex[3][1],x,y) < 10:
-            dif = global_.ellipse_vertex[3][0] - x
-            global_.ellipse_vertex[3][0] =  x
-            rec[0][0] -= dif
-            rec[1][0] -= dif
-
-
-        # Move a elipse
-        elif functions.distance(global_.ellipse_center[0],global_.ellipse_center[1],x,y) < 10:
-            difx = global_.ellipse_center[0] - x
-            dify = global_.ellipse_center[1] - y
-            #ellipse_vertex[3][0] =  - x
-            rec[0][0] -= difx
-            rec[1][0] -= difx
-            rec[2][0] -= difx
-            rec[3][0] -= difx
-
-
-            rec[1][1] -= dify
-            rec[2][1] -= dify
-            rec[0][1] -= dify
-            rec[3][1] -= dify            
-
-        #get_ellipse_param()
-        #rectangle_ellipse((ellipse_center,ellipse_size,ellipse_angle))
-
-        # Calcula a posição do ponto lateral direito e esquerdo da elipse
-        global_.ellipse_vertex[2][1] = (rec[2][1] + rec[3][1])//2
-        global_.ellipse_vertex[3][1] = (rec[0][1] + rec[1][1])//2
-        
-        # Calcula a posição do ponto superior e inferior da elipse
-        global_.ellipse_vertex[1][0] = (rec[1][0] + rec[2][0])//2
-        global_.ellipse_vertex[0][0] = (rec[0][0] + rec[3][0])//2
-
-        global_.ellipse_vertex[2][0] = (rec[2][0] + rec[3][0])//2
-        global_.ellipse_vertex[3][0] = (rec[0][0] + rec[1][0])//2
-        global_.ellipse_vertex[1][1] = (rec[1][1] + rec[2][1])//2
-        global_.ellipse_vertex[0][1] = (rec[0][1] + rec[3][1])//2
-
-        get.ellipse_paramaters(d_pixel)
-
-        # Desenha o retângulo que envolve a elipse
-        #box = np.array([[rec[0][0],rec[0][1]],[rec[1][0],rec[1][1]],[rec[2][0],rec[2][1]],[rec[3][0],rec[3][1]]])
-        #cv.drawContours(cache,[box],0,(0,0,255),1)
-
-        # Desenha a elipse
-        cv.ellipse(cache,global_.ellipse_param, (90,90,255), 1)
-
-        #cv.ellipse(cache, box, color = (0, 0, 255), thickness = 1)
-
-        cv.imshow('Original',cache)
-
-        edit = True
-
-        #height,width,volume = get_paramaters(d_pixel)
-
-        #partial_info  = np.copy(info_frame)
-        #cv.putText(partial_info,"Volume: " + str(int(volume)/1e+9) + " ul", (30,70),font ,1/2,font_color, 2) 
-        #cv.imshow('Informacao',partial_info)
-
-        #cv.circle(frame,(x,y),0,(0,255,255),8)
-    
-    elif (action == cv.EVENT_LBUTTONUP):
-
-        if edit == True:
-            print(3.5*np.sqrt((global_.ellipse_vertex[0][0] - global_.ellipse_vertex[1][0])**2 + (global_.ellipse_vertex[0][1] - global_.ellipse_vertex[1][1])**2))
-            edit = False
-            stop = False
-            try:
-
-                rec = functions.rectangle_ellipse((global_.ellipse_center,global_.ellipse_size,global_.ellipse_angle))
-                
-                cv.circle(cache,(global_.ellipse_vertex[0][0],global_.ellipse_vertex[0][1]),0,(0,0,255),8) # Ponto de baixo da elipse
-                cv.circle(cache,(global_.ellipse_vertex[1][0],global_.ellipse_vertex[1][1]),0,(0,0,255),8) # Ponto de cima da elipse
-                cv.circle(cache,(global_.ellipse_vertex[2][0],global_.ellipse_vertex[2][1]),0,(0,0,255),8) # Ponto lateral direito da elipse
-                cv.circle(cache,(global_.ellipse_vertex[3][0],global_.ellipse_vertex[3][1]),0,(0,0,255),8) # Ponto lateral esquerdo da elipse
-                cv.circle(cache,(global_.ellipse_center[0],global_.ellipse_center[1]),0,(0,0,255),8) # Ponto lateral esquerdo da elipse
-
-                cv.circle(cache,(rec[0][0],rec[0][1]),0,(0,0,255),8) # Canto inferior esquerdo do retângulo
-                cv.circle(cache,(rec[1][0],rec[1][1]),0,(0,0,255),8) # Canto superior esquerdo do retângulo
-                cv.circle(cache,(rec[2][0],rec[2][1]),0,(0,0,255),8) # Canto superior direito do retângulo
-                cv.circle(cache,(rec[3][0],rec[3][1]),0,(0,0,255),8) # Canto inferior direito do retângulo
-                # Desenha o retângulo que envolve a elipse
-                box = np.array([[rec[0][0],rec[0][1]],[rec[1][0],rec[1][1]],[rec[2][0],rec[2][1]],[rec[3][0],rec[3][1]]])
-                cv.drawContours(cache,[box],0,(0,0,255),1)
-                cv.ellipse(cache,global_.ellipse_param, (0,0,255), 1)
-                cv.imshow('Original',cache)
-            except:
-                None
-
-        
-        
-
-    return
-
-
 # Displays UI (menu) that should be used in Google Colab
 def menu_colab():
     global menu_path, button_start, start_menu
@@ -389,7 +209,7 @@ def show_menu(a):
         bar_style='',  # 'success', 'info', 'warning', 'danger' or ''
         style={'bar_color': '#66BB6A'},
         orientation='horizontal',
-        layout=Layout(width='90%', height='13px')
+        layout=Layout(width='90%', height='60%')
     )
 
     weight = 120.1  # Peso = 120.1 mg
@@ -398,20 +218,26 @@ def show_menu(a):
 
     # Hides loading menu until user press analyse button
     loading_bar.layout.visibility = 'hidden'
-    
-    trsh_bar = widgets.IntSlider(254, 0, 254, continuous_update=False)
-    vert_bar = widgets.IntSlider(0, 0, VideoInfo.height,continuous_update = False)
-    hor_bar = widgets.IntSlider(0, 0, VideoInfo.width, continuous_update=False)
-    scale_bar = widgets.IntSlider(100, 0, 100,continuous_update = False)
+
+    trsh_bar = widgets.IntSlider(254, 0, 254, description='Threshold',
+                                 continuous_update=False)
+    vert_bar = widgets.IntSlider(0, 0, VideoInfo.height,
+                                 description='Vertical Axis',
+                                 continuous_update=False)
+    hor_bar = widgets.IntSlider(0, 0, VideoInfo.width,
+                                description='Horizontal Axis',
+                                continuous_update=False)
+    scale_bar = widgets.IntSlider(100, 0, 100,
+                                  description='Scale',
+                                  continuous_update=False)
     all_bar = widgets.VBox([trsh_bar, vert_bar, hor_bar, scale_bar])
-    
+
     right_tabs = widgets.Accordion(children=[all_bar])
     right_tabs.set_title(0, 'Calibrate')
 
     right_menu = widgets.VBox([right_tabs, button_analysis])
 
     main_ui = widgets.HBox([left_menu, main_menu, right_menu], layout=Layout(justify_content='center'))
-
 
     all_ui = widgets.VBox([main_ui, loading_bar])
 
@@ -528,7 +354,7 @@ def show_menu(a):
         byte_im1 = im_buf_arr.tobytes()
         image.value = byte_im1
 
-        Ellipse.scale = scale
+        Ellipse.scale = scale/100
         Ellipse.thold = treshold
 
     def vert_calibration(a):
@@ -567,8 +393,8 @@ def show_menu(a):
 
         results = analyse(file, length, VideoInfo.roi, Ellipse.thold,
                           Ellipse, ManualEllipse, RevSolid, AllWidgets)
-        
-        AllWidgets.save_records(results)    
+
+        AllWidgets.save_records(results)   
         AllWidgets.displayed = True
 
     # Define callback function
@@ -582,7 +408,6 @@ def show_menu(a):
     vert_bar.observe(vert_calibration)
     hor_bar.observe(hor_calibration)
     scale_bar.observe(trsh_calibration)
-
 
 
 # Returns a ROI (Region Of Interest) based on a rectangle defined by user

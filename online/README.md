@@ -6,9 +6,9 @@
 [Rosana Almada Bassani](mailto:arbassani@unicamp.br), 
 [José Wilson Magalhães Bassani](bassani@unicamp.br)
 
-## Execução Online  [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
-
-<p style='text-align: justify;'> A execução online do projeto pode ser feita através de um abiente Google Colab </p>
+## Execução Online  
+<p style='text-align: justify;'> A execução online do projeto pode ser feita através de um abiente Google Colab [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
+ </p>
 
 ## Instalação e Pré-Requisitos
 
@@ -16,17 +16,14 @@
 
 <p style='text-align: justify;'> Contudo, o vídeo a ser analisado deve ser enviado na nuvem para que possa ser acessado pelo ambiente Google Colab. Os procedimentos para envio do vídeo estão descritos no item abaixo</p>
 
-## 
+## Como Executar
 
 <p style='text-align: justify;'>O usuário deve executar todas as células do Google Colab e em seguida deverá ser apresentado ao usuário um menu como apresentado abaixo:</p>
 
 
 <p style='text-align: justify;'>Para que o vídeo possa ser lido pelo software, o usuário deve fazer o envio do vídeo para a nuvem. Atualmente, isto pode ser feito de duas formas: Enviar o vídeo para o Google Drive e permitir o acesso do software ao Google Drive ou fazer o envio diretamente no Google Colab</p>
 
-
-
-
-
+![image info](./google_colab/colab_menu.png)
 
   
 
