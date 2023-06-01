@@ -6,9 +6,8 @@
 [Rosana Almada Bassani](mailto:arbassani@unicamp.br), 
 [José Wilson Magalhães Bassani](bassani@unicamp.br)
 
-## Execução Online  
-<p style='text-align: justify;'> A execução online do projeto pode ser feita através de um abiente Google Colab [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
- </p>
+## Execução Online  [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
+<p style='text-align: justify;'> A execução online do projeto pode ser feita através de um abiente Google Colab </p>
 
 ## Instalação e Pré-Requisitos
 
@@ -18,12 +17,23 @@
 
 ## Como Executar
 
-<p style='text-align: justify;'>O usuário deve executar todas as células do Google Colab e em seguida deverá ser apresentado ao usuário um menu como apresentado abaixo:</p>
+<p style='text-align: justify;'> Faça a abertura do arquivo Google Colab no navegador desejado clicando no link </p>  
+
+[![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb) 
+
+<p style='text-align: justify;'> Em seguida, execute o arquivo do Google Colab clicando no botão 
+<img src="./google_colab/images/run.png"> e será apresentado um menu inicial</p>
+
+![image info](./google_colab/images/colab_menu.png)
+
+<p style='text-align: justify;'>Para que o vídeo possa ser lido pelo software, coloque o caminho do vídeo no campo "Video Path". Dessa forma, é necessário que o vídeo a ser analisado seja enviado na nuvem. Os processos para envio são descritos abaixo</p>
+
+### Envio do Vídeo no Google Drive
 
 
-<p style='text-align: justify;'>Para que o vídeo possa ser lido pelo software, o usuário deve fazer o envio do vídeo para a nuvem. Atualmente, isto pode ser feito de duas formas: Enviar o vídeo para o Google Drive e permitir o acesso do software ao Google Drive ou fazer o envio diretamente no Google Colab</p>
 
-![image info](./google_colab/colab_menu.png)
+
+
 
   
 
