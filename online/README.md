@@ -21,14 +21,25 @@
 
 [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb) 
 
-<p style='text-align: justify;'> Em seguida, execute o arquivo do Google Colab clicando no botão 
-<img src="./google_colab/images/run.png"> e será apresentado um menu inicial</p>
+<p style='text-align: justify;'> Execute o arquivo do Google Colab clicando no botão 
+<img src="./google_colab/images/run.png" width="4%" height='4%'> (ou clique em Ambiente de Execução -> Executar Tudo) e em seguida, será apresentado um menu inicial</p>
 
 ![image info](./google_colab/images/colab_menu.png)
 
 <p style='text-align: justify;'>Para que o vídeo possa ser lido pelo software, coloque o caminho do vídeo no campo "Video Path". Dessa forma, é necessário que o vídeo a ser analisado seja enviado na nuvem. Os processos para envio são descritos abaixo</p>
 
-### Envio do Vídeo no Google Drive
+- ### Envio do Vídeo no Google Drive
+
+Faça login em seu *[Google Drive](https://drive.google.com/drive/u/0/my-drive)* e faça o envio do vídeo a ser analisado.
+
+Se o vídeo estiver enviado na raíz do Google Drive, inisra o seguinte caminho 
+
+
+
+- ### Envio do Vídeo no Google Colab
+
+
+
 
 
 
