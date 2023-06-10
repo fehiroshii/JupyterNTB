@@ -4,6 +4,7 @@ from ipywidgets import Layout
 import numpy as np
 import cv2 as cv
 import sys
+import os
 
 from google.colab import drive
 
@@ -49,7 +50,7 @@ def menu_colab():
     menu_path = widgets.Text(
         value='/content/drive/MyDrive/my_video.avi',
         placeholder='Type something',
-        description='Video Path:',
+        description='Video Name:',
         disabled=False,
         layout=Layout(width='40%')
     )
@@ -70,9 +71,26 @@ def menu_colab():
         icon='check'  # (FontAwesome names without the `fa-` prefix)
     )
 
-    start_menu = widgets.VBox([menu_path, 
-                               widgets.HBox([button_login, button_start])])
-    
+    button_select = widgets.RadioButtons(
+        options=['Google Colab', 'Google Drive'],
+        #   value='pineapple', # Defaults to 'pineapple'
+        #    layout={'width': 'max-content'}, # If the items' names are long
+        description='Load Video From:',
+        disabled=False
+    )
+
+    if os.path.exists('/content/drive/MyDrive'):
+        button_login.disabled = True
+        button_select.disabled = False
+    else:
+        button_select.disabled = True
+        button_login.disabled = False
+
+    left_menu = widgets.VBox([menu_path,
+                              widgets.HBox([button_login, button_start])])
+   
+    start_menu = widgets.HBox([left_menu, button_select])
+
 
     def login_request(a):
         drive.mount('/content/drive')
@@ -84,10 +102,14 @@ def menu_colab():
 
     display(start_menu)
 
+def verfiy_file():
+
+    None
+
 
 def show_menu(a):
     clear_output(wait=False)
-    global prev_x0, prev_x1, image, main, start_menu,logs_out,folder
+    global prev_x0, prev_x1, image, main, start_menu, logs_out,folder
     from ipywidgets import interact, interactive, fixed, interact_manual
 
     import warnings
