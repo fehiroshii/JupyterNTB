@@ -48,11 +48,11 @@ def menu_colab():
 
     # Configure widgets
     menu_path = widgets.Text(
-        value='/content/drive/MyDrive/my_video.avi',
+        value='my_video.avi',
         placeholder='Type something',
         description='Video Name:',
         disabled=False,
-        layout=Layout(width='40%')
+        layout=Layout(width='90%')
     )
 
     button_login = widgets.Button(
@@ -72,18 +72,18 @@ def menu_colab():
     )
 
     button_select = widgets.RadioButtons(
-        options=['Google Colab', 'Google Drive'],
+        options=[],
         #   value='pineapple', # Defaults to 'pineapple'
         #    layout={'width': 'max-content'}, # If the items' names are long
-        description='Load Video From:',
+        description='Source:',
         disabled=False
     )
 
     if os.path.exists('/content/drive/MyDrive'):
         button_login.disabled = True
-        button_select.disabled = False
+        button_select.options = ['Google Colab', 'Google Drive']
     else:
-        button_select.disabled = True
+        button_select.options = ['Google Colab']
         button_login.disabled = False
 
     left_menu = widgets.VBox([menu_path,
@@ -94,20 +94,28 @@ def menu_colab():
 
     def login_request(a):
         drive.mount('/content/drive')
+        button_select.options = ['Google Colab', 'Google Drive']
         button_login.disabled = True
         button_start.disabled = False
 
+    def verfiy_file(a):
+        if button_select.value == 'Google Colab':
+            relative_path = '/content/'
+        else:
+            relative_path = '/content/drive/MyDrive/'
+        
+        if os.path.isfile(relative_path+menu_path.value):
+            print("Video is acessible")
+            show_menu(relative_path+menu_path.value)
+        else:
+            print("Video Doesnt Exist, try again")
+
     button_login.on_click(login_request)  # Define callback function
-    button_start.on_click(show_menu)  # Define callback function
+    button_start.on_click(verfiy_file)  # Define callback function
 
     display(start_menu)
 
-def verfiy_file():
-
-    None
-
-
-def show_menu(a):
+def show_menu(path):
     clear_output(wait=False)
     global prev_x0, prev_x1, image, main, start_menu, logs_out,folder
     from ipywidgets import interact, interactive, fixed, interact_manual
@@ -116,7 +124,7 @@ def show_menu(a):
     warnings.simplefilter(action='ignore', category=FutureWarning)
 
     # Initialize main classes used for calculations
-    VideoInfo = entities.VideoInfo(menu_path.value)
+    VideoInfo = entities.VideoInfo(path)
     Ellipse = entities.Ellipse(0)
     ManualEllipse = entities.ManualEllipse(0,0)
     RevSolid = entities.RevolutionSolid(0)
@@ -147,7 +155,7 @@ def show_menu(a):
 
     # Configure widgets for left menu
     load_path = widgets.Text(
-        value= menu_path.value,
+        value=path,
         placeholder='Type something',
         description='Path:',
         disabled=False,
