@@ -7,6 +7,7 @@ import sys
 import os
 
 from google.colab import drive
+from google.colab.patches import cv2_imshow
 
 # adding Folder_2 to the system path
 sys.path.insert(0, '/content/JupyterNTB/source/')
@@ -217,7 +218,7 @@ def show_menu(path):
 
     button_preview = widgets.Button(
         description='Preview Video',
-        disabled=True,
+        disabled=False,
         button_style='',  # 'success', 'info', 'warning', 'danger' or ''
         tooltip='Click me',
         icon='eye'  # (FontAwesome names without the `fa-` prefix)
@@ -265,7 +266,7 @@ def show_menu(path):
     right_tabs = widgets.Accordion(children=[all_bar])
     right_tabs.set_title(0, 'Calibrate')
 
-    right_menu = widgets.VBox([right_tabs, button_analysis])
+    right_menu = widgets.VBox([right_tabs, button_preview, button_analysis])
 
     main_ui = widgets.HBox([left_menu, main_menu, right_menu], layout=Layout(justify_content='center'))
 
@@ -290,7 +291,7 @@ def show_menu(path):
         image.value = byte_im1
 
         return
-    
+
     def update_image(curr_indx):
         global prev_x0, prev_x1, image, main, out
         frame_number = 0
@@ -520,6 +521,15 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
     first = True
     display_img = 0
 
+    # Set resolutions
+    frame_width = int(video.get(3)) + 2
+    frame_height = int(video.get(4)) + 2
+    size = (frame_width, frame_height)
+
+    result = cv.VideoWriter('preview.mp4',
+                            cv.VideoWriter_fourcc(*'VP90'),
+                            30, size)
+
     # Loops video frame by frame
     while (not end):
 
@@ -539,7 +549,7 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
             filtered = functions.filters(frame_crop)
 
             # Execute on first iteraction
-            if first == True:
+            if first:
 
                 # get video fps and number of frames
                 fps = int(video.get(cv.CAP_PROP_FPS))
@@ -563,22 +573,24 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
 
             # Fit ellipse on the binary image and returns an image
             heart_contour, drawing = Ellipse.fit(binary_img, roi)
-
+            
             if display_img == 0:
-                cv.imshow('Applied Settings', drawing)
+                result.write(drawing)
+                # cv2_imshow(drawing)
             elif display_img == 1:
                 cv.rectangle(frame, roi[0], roi[1], cfg.REC_CLR, 2)
                 cv.ellipse(frame, Ellipse.param, cfg.ellipse_color, 1)
-                cv.imshow('Applied Settings', frame)
+                result.write(frame)
+                # cv2_imshow(frame)
             
-            key = cv.waitKey(1000//fps)
+            #key = cv.waitKey(1000//fps)
             
-            if key == ord('1'):
-                display_img = 0
-            elif key == ord('2'):
-                display_img = 1
-            elif key == cfg.close:
-                end = True
+            #if key == ord('1'):
+            #    display_img = 0
+            #elif key == ord('2'):
+            #    display_img = 1
+            #elif key == cfg.close:
+            #    end = True
 
         else:
             break
@@ -586,6 +598,7 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
         if (not ret) or (current_frame == range[1]):
             end = True
 
+    result.release()
     video.release()
     cv.destroyAllWindows()
 

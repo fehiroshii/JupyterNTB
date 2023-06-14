@@ -3,6 +3,7 @@ from IPython.display import display, clear_output
 from ipywidgets import Layout, Label
 import numpy as np
 import cv2 as cv
+import os
 
 import entities
 import results
