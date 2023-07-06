@@ -118,7 +118,7 @@ def menu_colab():
 
 def show_menu(path):
     clear_output(wait=False)
-    global prev_x0, prev_x1, image, main, start_menu, logs_out,folder
+    global prev_x0, prev_x1, image, main, start_menu, logs_out, folder, main_video
     from ipywidgets import interact, interactive, fixed, interact_manual
 
     import warnings
@@ -195,10 +195,14 @@ def show_menu(path):
         value=byte_im1,
         format='png',
         width=320,
-        height=240
+        height=240,
+        layout=Layout(display='block')
     )
 
-    main_menu = widgets.VBox([image, range_bar])
+    main_video = widgets.Video.from_file("./preview.mp4",
+                                         layout=Layout(display='none'))
+
+    main_menu = widgets.VBox([main_video, image, range_bar])
 
     button_roi = widgets.Button(
         description='Select ROI',
@@ -412,8 +416,11 @@ def show_menu(path):
         ManualEllipse.hor_ax = hor_bar.value
 
     def start_preview(a):
+        global main_video, image
         length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
-        preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse)
+        #preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse)
+        image.layout = Layout(display='none')
+        main_video.layout = Layout(display='block')
 
     def start_analysis2(a):
         Ellipse.clear_records()
@@ -519,11 +526,11 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
 
     end = False
     first = True
-    display_img = 0
+    display_img = 1
 
     # Set resolutions
-    frame_width = int(video.get(3)) + 2
-    frame_height = int(video.get(4)) + 2
+    frame_width = int(video.get(3)) + 1
+    frame_height = int(video.get(4)) + 1
     size = (frame_width, frame_height)
 
     result = cv.VideoWriter('preview.mp4',
@@ -563,7 +570,7 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
             # Add a black border to both images
             binary_img = cv.copyMakeBorder(
                 binary_img,
-                top= roi[0][1] + 1,
+                top=roi[0][1] + 1,
                 bottom=frame.shape[0] - roi[1][1] + 1,
                 left=roi[0][0] +1,
                 right=frame.shape[1] - roi[1][0] + 1,
@@ -609,6 +616,15 @@ def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, All
     
     video = cv.VideoCapture(file)   # Open video
     video.set(cv.CAP_PROP_POS_FRAMES, range[0])
+
+    # Set resolutions
+    frame_width = int(video.get(3)) + 1
+    frame_height = int(video.get(4)) + 1
+    size = (frame_width, frame_height)
+
+    result = cv.VideoWriter('preview.mp4',
+                            cv.VideoWriter_fourcc(*'VP90'),
+                            30, size)
 
     total_frame = video.get(cv.CAP_PROP_FRAME_COUNT)
 
@@ -676,6 +692,10 @@ def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, All
             # Fit ellipse on the binary image and returns an image
             heart_contour, drawing = ellipse.fit(binary_img, roi)
 
+            cv.rectangle(frame, roi[0], roi[1], cfg.REC_CLR, 2)
+            cv.ellipse(frame, ellipse.param, cfg.ellipse_color, 1)
+            result.write(frame)
+
             cont_area_record[current_frame - range[0]] = cv.contourArea(heart_contour)
 
 
@@ -703,7 +723,7 @@ def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, All
             time_axis = time_axis[0:next_frame - range[0]]
             break
 
-
+    result.release()
     video.release()
 
 
