@@ -119,7 +119,6 @@ def menu_colab():
 def show_menu(path):
     clear_output(wait=False)
     global prev_x0, prev_x1, image, main, start_menu, logs_out, folder, main_video
-    from ipywidgets import interact, interactive, fixed, interact_manual
 
     import warnings
     warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -129,8 +128,7 @@ def show_menu(path):
     Ellipse = entities.Ellipse(0)
     ManualEllipse = entities.ManualEllipse(0,0)
     RevSolid = entities.RevolutionSolid(0)
-    
-    
+
     file = VideoInfo.file
     folder = VideoInfo.folder
     name = VideoInfo.name
@@ -141,7 +139,7 @@ def show_menu(path):
     fps = VideoInfo.fps
 
     # Get list of all video timestamp array as (00:00, 00:01, ...)
-    options = VideoInfo.time_options 
+    options = VideoInfo.time_options
 
     # Read first frame and converts to binary
     res, frame = vd_display.read()
@@ -199,10 +197,11 @@ def show_menu(path):
         layout=Layout(display='block')
     )
 
-    main_video = widgets.Video.from_file("./preview.mp4",
-                                         layout=Layout(display='none'))
+    #f = open("preview.mp4", "w")    # Creates temporary file
+    #main_video = widgets.Video.from_file("./preview.mp4",
+                                         #layout=Layout(display='none'))
 
-    main_menu = widgets.VBox([main_video, image, range_bar])
+    main_menu = widgets.VBox([image, range_bar])
 
     button_roi = widgets.Button(
         description='Select ROI',
@@ -418,9 +417,12 @@ def show_menu(path):
     def start_preview(a):
         global main_video, image
         length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
-        #preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse)
+        preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse)
         image.layout = Layout(display='none')
         main_video.layout = Layout(display='block')
+        main_video.close()
+        main_video.format()
+        main_video.from_file("./preview.mp4")
 
     def start_analysis2(a):
         Ellipse.clear_records()
