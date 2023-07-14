@@ -197,8 +197,8 @@ def show_menu(path):
         layout=Layout(display='block')
     )
 
-    #f = open("preview.mp4", "w")    # Creates temporary file
-    #main_video = widgets.Video.from_file("./preview.mp4",
+    # f = open("preview.mp4", "w")    # Creates temporary file
+    # main_video = widgets.Video.from_file("./preview.mp4",
                                          #layout=Layout(display='none'))
 
     main_menu = widgets.VBox([image, range_bar])
