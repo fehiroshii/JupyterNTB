@@ -6,8 +6,7 @@ import cv2 as cv
 import sys
 import os
 
-from google.colab import drive
-from google.colab.patches import cv2_imshow
+from google.colab import drive, files
 
 # adding Folder_2 to the system path
 sys.path.insert(0, '/content/JupyterNTB/source/')
@@ -83,6 +82,7 @@ def menu_colab():
     if os.path.exists('/content/drive/MyDrive'):
         button_login.disabled = True
         button_select.options = ['Google Colab', 'Google Drive']
+        button_select.value = 'Google Drive'
     else:
         button_select.options = ['Google Colab']
         button_login.disabled = False
@@ -96,6 +96,7 @@ def menu_colab():
     def login_request(a):
         drive.mount('/content/drive')
         button_select.options = ['Google Colab', 'Google Drive']
+        button_select.value = 'Google Drive'
         button_login.disabled = True
         button_start.disabled = False
 
@@ -220,7 +221,7 @@ def show_menu(path):
     )
 
     button_preview = widgets.Button(
-        description='Preview Video',
+        description='Dowload Video',
         disabled=False,
         button_style='',  # 'success', 'info', 'warning', 'danger' or ''
         tooltip='Click me',
@@ -417,12 +418,7 @@ def show_menu(path):
     def start_preview(a):
         global main_video, image
         length = (range_bar.index[0]*fps, range_bar.index[1]*fps)
-        preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse)
-        image.layout = Layout(display='none')
-        main_video.layout = Layout(display='block')
-        main_video.close()
-        main_video.format()
-        main_video.from_file("./preview.mp4")
+        preview(file, length, VideoInfo.roi, Ellipse, ManualEllipse, AllWidgets)
 
     def start_analysis2(a):
         Ellipse.clear_records()
@@ -521,7 +517,7 @@ def calibrate_roi(file, lenght):
     return roi
 
 
-def preview(file, range, roi, Ellipse, ManualEllipse):
+def preview(file, range, roi, Ellipse, ManualEllipse, AllWidgets):
 
     video = cv.VideoCapture(file)   # Open video
     video.set(cv.CAP_PROP_POS_FRAMES, range[0])
@@ -538,6 +534,11 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
     result = cv.VideoWriter('preview.mp4',
                             cv.VideoWriter_fourcc(*'VP90'),
                             30, size)
+    
+    AllWidgets.loading_bar.max = range[1]
+    AllWidgets.loading_bar.min = range[0]
+    AllWidgets.loading_bar.value = range[0]
+    AllWidgets.loading_bar.layout.visibility = 'visible'
 
     # Loops video frame by frame
     while (not end):
@@ -548,6 +549,8 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
         # Define index of next, current and previous frame
         next_frame = int(video.get(cv.CAP_PROP_POS_FRAMES))
         current_frame = int(next_frame - 1)
+
+        AllWidgets.loading_bar.value = current_frame
 
         # Check if the frame is valid
         if ret:
@@ -610,6 +613,8 @@ def preview(file, range, roi, Ellipse, ManualEllipse):
     result.release()
     video.release()
     cv.destroyAllWindows()
+    AllWidgets.loading_bar.layout.visibility = 'hidden'  # HideS loading bar
+    files.download('preview.mp4')
 
 
 def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, AllWidgets):
@@ -624,9 +629,6 @@ def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, All
     frame_height = int(video.get(4)) + 1
     size = (frame_width, frame_height)
 
-    result = cv.VideoWriter('preview.mp4',
-                            cv.VideoWriter_fourcc(*'VP90'),
-                            30, size)
 
     total_frame = video.get(cv.CAP_PROP_FRAME_COUNT)
 
@@ -696,7 +698,6 @@ def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, All
 
             cv.rectangle(frame, roi[0], roi[1], cfg.REC_CLR, 2)
             cv.ellipse(frame, ellipse.param, cfg.ellipse_color, 1)
-            result.write(frame)
 
             cont_area_record[current_frame - range[0]] = cv.contourArea(heart_contour)
 
@@ -725,7 +726,6 @@ def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, All
             time_axis = time_axis[0:next_frame - range[0]]
             break
 
-    result.release()
     video.release()
 
 
@@ -737,7 +737,7 @@ def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, All
     detection_method = 1  # 1 = Detecção por area do contorno do coracao
     weight = 120.1  # Peso = 120.1 mg
 
-    AllWidgets.loading_bar.layout.visibility = 'hidden' # Hides loading bar
+    AllWidgets.loading_bar.layout.visibility = 'hidden' # HideS loading bar
 
     results.show_results(weight, time_axis,
                          ellipse, manual_ellipse, rev_solid, ellipse_vol_const,
