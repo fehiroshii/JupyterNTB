@@ -10,13 +10,43 @@
 
 ## Execução Online  [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
 
-O software também pode ser executado de forma online em um ambiente Google Colab, sem a necessidade de instalação dos arquivos. Uma descrição detalhada do funcionamento do software online está inserida no documento README.MD na pasta/online deste mesmo projeto
+O software também pode ser executado de forma online em um ambiente Google Colab, sem a necessidade de instalação dos arquivos. Para que o vídeo possa ser lido pelo software, é necessário que o vídeo a ser analisado seja enviado na nuvem. Os processos para envio são descritos abaixo</p>
+
+- ### Envio do Vídeo no Google Drive
+
+Faça login em seu *[Google Drive](https://drive.google.com/drive/u/0/my-drive)* e faça o envio do vídeo a ser analisado.
+
+Após isso, retorne ao software dentro do Google Colab e coloque o nome do vídeo no caminho "my_path" como a seguir: 
+
+Se o vídeo está localizado dentro da raíz do Google Drive, será necessário apenas inserir o nome do vídeo, por exemplo: "my_video.avi"
+
+Se o vídeo está inserido dentro alguma pasta, será necessário colocar o caminho da pasta antes do nome do vídeo, por exemplo: se o vídeo está dentro da pasta "my_file", coloque "/my_file/my_video.avi"
+
+
+Após isso, o menu principal será aberto com as funcionalidades do software
+
+
+###
+
+## Instalação
+
+1. Baixe os arquivos da pasta /source
+
+   Alternativamente, faça o dowload do projeto executando o seguinte comando
+
+   ```sh
+   $git clone https://github.com/fehiroshii/JupyterNTB/
+   ```
+2. Execute o arquivo "HEMOINSECT.ipynb"
+
+
 
 
 ### Pré-requisitos
 
+Para que o software execute corretamente, são necessários a instalação da linguagem Python, de um ambiente Jupyter e das bibliotecas explicitadas abaixo:
 
-- InstalaPython 
+- Python  
 - Jupyter Notebook ou JupyterLab
 
 
@@ -24,15 +54,9 @@ O software também pode ser executado de forma online em um ambiente Google Cola
 | :------------------------------------: | :-------: |
 | [Matplotlib](https://matplotlib.org/)  | 3.5.1     |
 | [Numpy](https://numpy.org/)            |  1.20.1   |
-| [OpenCV](https://opencv.org/)          |  4.6.0.66 |
+| [OpenCV](https://opencv.org/)          |  4.6.0.   |
 | [Scipy](https://scipy.org/)            |  1.8.1    |
 | [Pandas](https://pandas.pydata.org/)   | 1.2.3     |
-
-
-## Instalação
-
-No atual momento, para a execução do software é necessário fazer o dowload de todos os arquivos localizados dentro da pasta source
-
 
   
 
