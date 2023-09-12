@@ -23,7 +23,7 @@ Se o vídeo está localizado dentro da raíz do Google Drive, será necessário 
 Se o vídeo está inserido dentro alguma pasta, será necessário colocar o caminho da pasta antes do nome do vídeo, por exemplo: se o vídeo está dentro da pasta "my_file", coloque "/my_file/my_video.avi"
 
 
-Após isso, o menu principal será aberto com as funcionalidades do software desejado
+Após isso, o menu  será aberto com as funcionalidades do software desejado
 
 
 ###
