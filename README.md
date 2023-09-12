@@ -10,20 +10,28 @@
 
 ## Execução Online  [![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)
 
-O software também pode ser executado de forma online em um ambiente Google Colab, sem a necessidade de instalação dos arquivos. Para que o vídeo possa ser lido pelo software, é necessário que o vídeo a ser analisado seja enviado na nuvem. Os processos para envio são descritos abaixo</p>
+O software também pode ser executado de forma online em um ambiente Google Colab, sem a necessidade de instalação dos arquivos. Para que o vídeo possa ser lido pelo software, é necessário que o vídeo a ser analisado seja enviado na nuvem. Os processos para envio são descritos abaixo
 
-- ### Envio do Vídeo no Google Drive
+
+ 1. **Envio do Vídeo no Google Drive**
 
 Faça login em seu *[Google Drive](https://drive.google.com/drive/u/0/my-drive)* e faça o envio do vídeo a ser analisado.
 
-Após isso, retorne ao software dentro do Google Colab e coloque o nome do vídeo no caminho "my_path" como a seguir: 
+2. **Execute o _Software_**
 
-Se o vídeo está localizado dentro da raíz do Google Drive, será necessário apenas inserir o nome do vídeo, por exemplo: "my_video.avi"
+Abra o [link do software](https://colab.research.google.com/github/fehiroshii/JupyterNTB/blob/main/online/google_colab/main_ntb.ipynb)  e execute o programa em "Ambiente de execução" -> "Executar tudo", ou pressione a tecla de atalho Ctrl + F9
 
-Se o vídeo está inserido dentro alguma pasta, será necessário colocar o caminho da pasta antes do nome do vídeo, por exemplo: se o vídeo está dentro da pasta "my_file", coloque "/my_file/my_video.avi"
+3. **Carregue o arquivo**
+O seguinte menu será apresentado:
 
+Se o vídeo foi carregado no Google Drive, faça o login clicando no botão "Login Google Drive" e 
 
-Após isso, o menu  será aberto com as funcionalidades do software desejado
+Após isso, coloque o nome do vídeo no caminho "my_path" como a seguir: 
+  * Se o vídeo está localizado dentro da raíz do Google Drive, será necessário apenas inserir o nome do vídeo, por exemplo: "my_video.avi"
+
+  * Se o vídeo está inserido dentro alguma pasta, será necessário colocar o caminho da pasta antes do nome do vídeo, por exemplo: se o vídeo está dentro da pasta "my_file", coloque "/my_file/my_video.avi"
+
+Por fim,  pressione o botão "Load Video" 
 
 
 ###
@@ -37,7 +45,7 @@ Após isso, o menu  será aberto com as funcionalidades do software desejado
    ```sh
    $git clone https://github.com/fehiroshii/JupyterNTB/
    ```
-2. Execute o arquivo "HEMOINSECT.ipynb"
+2. Execute o arquivo "main_ntb.ipynb"
 
 
 
