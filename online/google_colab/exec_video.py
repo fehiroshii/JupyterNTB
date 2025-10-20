@@ -619,7 +619,7 @@ def preview(file, range, roi, Ellipse, ManualEllipse, AllWidgets):
 
 def analyse(file, range, roi, thold_bin, ellipse, manual_ellipse, rev_solid, AllWidgets):
 
-    np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+    # np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
     
     video = cv.VideoCapture(file)   # Open video
     video.set(cv.CAP_PROP_POS_FRAMES, range[0])
