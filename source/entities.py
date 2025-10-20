@@ -172,7 +172,7 @@ class Ellipse():
 
     # Array that contains the ellipse parameters trought video
     # Useful when user goes back on video
-    param_record = np.array([], dtype=object)
+    param_record = []
     vertex_record = np.array([], dtype=object)
 
     def __init__(self, scale):
@@ -393,4 +393,5 @@ class ManualEllipse():
         self.volume_record = np.array([], dtype=object)
         self.height_record = np.array([], dtype=object)
         self.width_record = np.array([], dtype=object)
+
 
