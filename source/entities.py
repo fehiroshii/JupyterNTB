@@ -331,7 +331,7 @@ class Ellipse():
         self.volume_record = np.array([], dtype=object)
         self.height_record = np.array([], dtype=object)
         self.width_record = np.array([], dtype=object)
-        self.param_record = np.array([], dtype=object)
+        self.param_record = []
         self.vertex_record = np.array([], dtype=object)
 
 
@@ -393,5 +393,6 @@ class ManualEllipse():
         self.volume_record = np.array([], dtype=object)
         self.height_record = np.array([], dtype=object)
         self.width_record = np.array([], dtype=object)
+
 
 
